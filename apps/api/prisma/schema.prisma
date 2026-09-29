@@ -18,20 +18,25 @@ enum Role {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  username     String?
-  firstName    String?
-  lastName     String?
-  avatarUrl    String?
-  bio          String?
-  roles        Role[]    @default([STUDENT])
-  isActive     Boolean   @default(true)
-  expertisorId String?   @unique
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  username           String?
+  firstName          String?
+  lastName           String?
+  avatarUrl          String?
+  bio                String?
+  roles              Role[]              @default([STUDENT])
+  isActive           Boolean             @default(true)
+  expertisorId       String?             @unique
   lastLoginAt        DateTime?
   authorApplications AuthorApplication[]
+  createdProducts    Product[]           @relation("ProductCreatedBy")
+  updatedProducts    Product[]           @relation("ProductUpdatedBy")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+  Course             Course[]
+  Bundle             Bundle[]
+  Workshop           Workshop[]
 
   @@index([email])
   @@index([isActive])
@@ -61,4 +66,230 @@ model AuthorApplication {
 
   @@index([userId])
   @@index([status])
+}
+
+enum ProductType {
+  COURSE
+  BUNDLE
+  WORKSHOP
+}
+
+enum ProductStatus {
+  DRAFT
+  IN_REVIEW
+  CHANGES_REQUESTED
+  ON_AIR
+  OFF_AIR
+  ARCHIVED
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ALL_LEVELS
+}
+
+enum SessionType {
+  VIDEO
+  TEXT
+  LIVE
+}
+
+enum VideoStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum ResourceType {
+  PDF
+  ZIP
+  EXTERNAL_LINK
+  GITHUB
+}
+
+model Product {
+  id               String        @id @default(uuid())
+  title            String
+  slug             String        @unique
+  description      String?       @db.Text
+  shortDescription String?       @db.Text
+  thumbnail        String?
+  type             ProductType
+  status           ProductStatus @default(DRAFT)
+  createdById      String
+  createdBy        User          @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  updatedById      String?
+  updatedBy        User?         @relation("ProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
+  course           Course?
+  bundle           Bundle?
+  workshop         Workshop?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([createdById])
+}
+
+model Course {
+  id         String      @id @default(uuid())
+  productId  String      @unique
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  level      CourseLevel @default(BEGINNER)
+  language   String?     @default("en")
+  sections   Section[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  categoryId String?
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  Bundle       Bundle?        @relation(fields: [bundleId], references: [id])
+  bundleId     String?
+  BundleCourse BundleCourse[]
+
+  @@index([authorId])
+  @@index([level])
+  @@index([categoryId])
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  courses     Course[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Bundle {
+  id        String   @id @default(uuid())
+  productId String   @unique
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  courses   Course[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  BundleCourse BundleCourse[]
+
+  @@index([authorId])
+  @@index([productId])
+}
+
+model BundleCourse {
+  id        String   @id @default(uuid())
+  bundleId  String
+  bundle    Bundle   @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([bundleId])
+  @@index([courseId])
+}
+
+model WorkshopSession {
+  id          String    @id @default(uuid())
+  workshopId  String
+  workshop    Workshop  @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  title       String
+  description String?   @db.Text
+  position    Int
+  sessions    Session[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([workshopId, position])
+  @@index([workshopId])
+}
+
+model Section {
+  id          String    @id @default(uuid())
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?   @db.Text
+  position    Int
+  sessions    Session[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([courseId, position])
+  @@index([courseId])
+}
+
+model Workshop {
+  id              String            @id @default(uuid())
+  productId       String            @unique
+  product         Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  authorId        String
+  author          User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  WorkshopSession WorkshopSession[]
+
+  @@index([authorId])
+  @@index([productId])
+}
+
+model Video {
+  id           String      @id @default(uuid())
+  sessionId    String      @unique
+  session      Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  vimeoVideoId String      @unique
+  duration     Int?
+  thumbnail    String?
+  status       VideoStatus @default(PROCESSING)
+  title        String?
+  description  String?     @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sessionId])
+}
+
+model Resource {
+  id         String       @id @default(uuid())
+  sessionId  String
+  session    Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  title      String
+  type       ResourceType
+  url        String?
+  storageKey String?
+  fileName   String?
+  fileSize   Int?
+  mimeType   String?
+  position   Int          @default(0)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@unique([sessionId, position])
+  @@index([sessionId])
+}
+
+model Session {
+  id                String           @id @default(uuid())
+  sectionId         String
+  section           Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title             String
+  position          Int              @default(0)
+  status            SessionType      @default(VIDEO)
+  video             Video?
+  resources         Resource[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  WorkshopSession   WorkshopSession? @relation(fields: [workshopSessionId], references: [id])
+  workshopSessionId String?
+
+  @@unique([sectionId, position])
+  @@index([sectionId])
 }
