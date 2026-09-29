@@ -10,10 +10,55 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  SUPER_ADMIN
+  MANAGER
+  AUTHOR
+  STUDENT
+}
+
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  roles     String[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String    @id @default(uuid())
+  email        String    @unique
+  username     String?
+  firstName    String?
+  lastName     String?
+  avatarUrl    String?
+  bio          String?
+  roles        Role[]    @default([STUDENT])
+  isActive     Boolean   @default(true)
+  expertisorId String?   @unique
+  lastLoginAt        DateTime?
+  authorApplications AuthorApplication[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([email])
+  @@index([isActive])
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AuthorApplication {
+  id           String            @id @default(uuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline     String
+  bio          String
+  expertise    String[]
+  portfolioUrl String?
+  sampleVideo  String?
+  status       ApplicationStatus @default(PENDING)
+  reviewNotes  String?
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }
