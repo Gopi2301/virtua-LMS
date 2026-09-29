@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
-import { generateSlug } from 'src/utils/slugify';
+import { generateSlug } from '@virtua-lms/utils';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { CourseQueryDto } from './dto/query-course.dto';
 import { Prisma } from '@prisma/client';

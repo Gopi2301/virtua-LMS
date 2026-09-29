@@ -1,0 +1,11 @@
+{
+    "name": "@virtua-lms/utils",
+    "version": "0.0.1",
+    "description": "Common utilities for the VirtuaLMS platform",
+    "private": true,
+    "main": "./index.js",
+    "types": "./index.d.ts",
+    "dependencies": {
+        "slugify": "^1.6.9"
+    }
+}
