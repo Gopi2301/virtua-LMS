@@ -1,0 +1,42 @@
+{
+  "name": "virtua-lms",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "dev:api": "pnpm --filter @virtua-lms/api dev",
+    "dev:web": "pnpm --filter @virtua-lms/web dev",
+    "dev:admin": "pnpm --filter @virtua-lms/admin dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.17.0",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "turbo": "^2.11.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "@prisma/client",
+      "prisma",
+      "esbuild",
+      "msgpackr-extract",
+      "workerd",
+      "@scarf/scarf"
+    ]
+  }
+}
