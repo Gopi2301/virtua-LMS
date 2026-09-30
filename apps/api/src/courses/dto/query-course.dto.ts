@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsOptional, IsString, IsInt, Min, Max } from "class-validator";
+import { IsOptional, IsString, IsInt, Min, Max, IsEnum } from "class-validator";
+import { ProductStatus } from '@prisma/client';
 
 export class CourseQueryDto {
     @ApiPropertyOptional({
@@ -34,11 +35,11 @@ export class CourseQueryDto {
     limit: number = 20;
 
     @ApiPropertyOptional({
-        example: 'PUBLISHED'
+        enum: ProductStatus
     })
     @IsOptional()
-    @IsString()
-    status?: string;
+    @IsEnum(ProductStatus)
+    status?: ProductStatus;
 
     @ApiPropertyOptional({
         example: 'cuid1234'

@@ -1,3 +1,8 @@
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { CourseContentGuard, ContentKind } from '../auth/course-content.guard';
 import {
   Body,
   Controller,
@@ -24,6 +29,9 @@ import {
 
 @ApiTags('Sections')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard, CourseContentGuard)
+@Roles('AUTHOR', 'MANAGER', 'SUPER_ADMIN')
+@ContentKind('section')
 @Controller('sections')
 export class SectionsController {
   constructor(private readonly sectionsService: SectionsService) {}
@@ -90,3 +98,4 @@ export class SectionsController {
     return this.sectionsService.remove(id, req.user.id);
   }
 }
+

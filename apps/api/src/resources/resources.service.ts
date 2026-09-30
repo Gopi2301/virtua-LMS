@@ -72,11 +72,30 @@ export class ResourcesService {
   /**
    * Create a new resource attached to a session
    */
-  async create(dto: CreateResourceDto, userId: string) {
+  async create(dto: CreateResourceDto, userId: string, roles?: string[]) {
     const session = await this.resolveSession(dto.sessionId);
 
-    if (session.section.course.authorId !== userId) {
+    const isPrivileged = roles?.some(r => ['MANAGER', 'SUPER_ADMIN'].includes(r));
+    if (session.section.course.authorId !== userId && !isPrivileged) {
       throw new ForbiddenException('You can only add resources to sessions in your own courses');
+    }
+
+    if (dto.type === ResourceType.PDF) {
+      const isImage =
+        (dto.mimeType && dto.mimeType.startsWith('image/')) ||
+        (dto.fileName && /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(dto.fileName)) ||
+        (dto.url && /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(dto.url.split('?')[0]));
+      if (isImage) {
+        throw new BadRequestException('Cannot attach an image as a PDF resource. Please upload a PDF file or change the resource type.');
+      }
+    } else if (dto.type === ResourceType.ZIP) {
+      const isImage =
+        (dto.mimeType && dto.mimeType.startsWith('image/')) ||
+        (dto.fileName && /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(dto.fileName)) ||
+        (dto.url && /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(dto.url.split('?')[0]));
+      if (isImage) {
+        throw new BadRequestException('Cannot attach an image as a ZIP resource. Please upload an archive file or change the resource type.');
+      }
     }
 
     let targetPosition = dto.position;
@@ -142,10 +161,12 @@ export class ResourcesService {
     title: string | undefined,
     type: ResourceType,
     userId: string,
+    roles?: string[],
   ) {
     const session = await this.resolveSession(sessionId);
 
-    if (session.section.course.authorId !== userId) {
+    const isPrivileged = roles?.some(r => ['MANAGER', 'SUPER_ADMIN'].includes(r));
+    if (session.section.course.authorId !== userId && !isPrivileged) {
       throw new ForbiddenException('You can only upload resources to sessions in your own courses');
     }
 
@@ -188,10 +209,11 @@ export class ResourcesService {
   /**
    * Update resource details or position
    */
-  async update(id: string, dto: UpdateResourceDto, userId: string) {
+  async update(id: string, dto: UpdateResourceDto, userId: string, roles?: string[]) {
     const resource = await this.resolveResource(id);
 
-    if (resource.session.section.course.authorId !== userId) {
+    const isPrivileged = roles?.some(r => ['MANAGER', 'SUPER_ADMIN'].includes(r));
+    if (resource.session.section.course.authorId !== userId && !isPrivileged) {
       throw new ForbiddenException('You can only update resources in your own courses');
     }
 
@@ -278,10 +300,11 @@ export class ResourcesService {
   /**
    * Delete a resource and remove any stored file
    */
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string, roles?: string[]) {
     const resource = await this.resolveResource(id);
 
-    if (resource.session.section.course.authorId !== userId) {
+    const isPrivileged = roles?.some(r => ['MANAGER', 'SUPER_ADMIN'].includes(r));
+    if (resource.session.section.course.authorId !== userId && !isPrivileged) {
       throw new ForbiddenException('You can only delete resources in your own courses');
     }
 

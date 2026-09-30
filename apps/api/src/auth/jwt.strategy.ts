@@ -109,14 +109,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
             throw new UnauthorizedException('User account has been deactivated. Please contact an administrator.');
         }
 
-        // Combine DB roles with token roles
-        const combinedRoles = Array.from(new Set([...(dbUser.roles as string[]), ...matchedRoles])) as UserRole[];
+        // Keycloak seeds roles on first registration. Thereafter LMS role changes
+        // are authoritative, including revocation; stale token grants must not win.
+        const combinedRoles = dbUser.roles as UserRole[];
 
         return {
             id: dbUser.id,
             username: dbUser.username || username,
             email: dbUser.email,
-            name: displayName,
+            name: [dbUser.firstName, dbUser.lastName].filter(Boolean).join(' ') || displayName,
             roles: combinedRoles,
             isActive: dbUser.isActive,
             rawPayload: payload,

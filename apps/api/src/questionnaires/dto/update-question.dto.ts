@@ -1,5 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { QuestionType } from '@prisma/client';
+import { Type } from 'class-transformer';
+import { ArrayMinSize, ArrayMaxSize, IsArray, ValidateNested } from 'class-validator';
+import { CreateOptionDto } from './create-option.dto';
 import {
   IsEnum,
   IsInt,
@@ -9,6 +12,15 @@ import {
 } from 'class-validator';
 
 export class UpdateQuestionDto {
+  @ApiPropertyOptional({ type: [CreateOptionDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(2)
+  @ArrayMaxSize(8)
+  @ValidateNested({ each: true })
+  @Type(() => CreateOptionDto)
+  options?: CreateOptionDto[];
+
   @ApiPropertyOptional({
     example: 'Updated question text',
     description: 'The question text',

@@ -23,6 +23,7 @@ import { CoursePublishingService } from './course-publishing.service';
 import { ReviewDecisionDto } from './dto/review-decision.dto';
 import { ReviewQueueQueryDto } from './dto/review-queue-query.dto';
 import { SubmitForReviewDto } from './dto/submit-for-review.dto';
+import { CourseContentGuard, ContentKind } from '../auth/course-content.guard';
 
 @ApiTags('Course Publishing')
 @ApiBearerAuth()
@@ -139,6 +140,8 @@ export class CoursePublishingController {
     // ─── Read endpoints ───────────────────────────────────────────────────────
 
     @Get('submissions')
+    @UseGuards(CourseContentGuard)
+    @ContentKind('course')
     @Roles('AUTHOR', 'MANAGER', 'SUPER_ADMIN')
     @ApiOperation({
         summary: 'Get submission history for a course',

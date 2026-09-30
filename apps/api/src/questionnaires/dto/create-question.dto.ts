@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { QuestionType } from '@prisma/client';
+import { Type } from 'class-transformer';
+import { ArrayMinSize, ArrayMaxSize, IsArray, ValidateNested } from 'class-validator';
+import { CreateOptionDto } from './create-option.dto';
 import {
   IsEnum,
   IsInt,
@@ -10,6 +13,15 @@ import {
 } from 'class-validator';
 
 export class CreateQuestionDto {
+  @ApiPropertyOptional({ type: [CreateOptionDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(2)
+  @ArrayMaxSize(8)
+  @ValidateNested({ each: true })
+  @Type(() => CreateOptionDto)
+  options?: CreateOptionDto[];
+
   @ApiProperty({
     example: 'What decorator defines a controller in NestJS?',
     description: 'The question text',

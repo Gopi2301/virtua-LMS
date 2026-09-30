@@ -1,3 +1,8 @@
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { CourseContentGuard, ContentKind } from '../auth/course-content.guard';
 import {
   Body,
   Controller,
@@ -20,6 +25,9 @@ import { AttachVideoDto, UpdateVideoDto } from './dto';
 
 @ApiTags('Videos')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard, CourseContentGuard)
+@Roles('AUTHOR', 'MANAGER', 'SUPER_ADMIN')
+@ContentKind('video')
 @Controller('videos')
 export class VideosController {
   constructor(private readonly videosService: VideosService) {}
@@ -69,3 +77,4 @@ export class VideosController {
     return this.videosService.remove(sessionId, req.user.id);
   }
 }
+

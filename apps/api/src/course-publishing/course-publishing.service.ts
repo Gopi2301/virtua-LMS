@@ -57,6 +57,22 @@ export class CoursePublishingService {
 
         assertTransition(product.status, ProductStatus.IN_REVIEW);
 
+        const sessions = product.course.sections.flatMap(section => section.sessions);
+        if (!product.description?.trim() || sessions.length === 0) {
+            throw new BadRequestException('Add a course description and at least one lesson before submitting');
+        }
+        if (sessions.some(session => session.status === 'VIDEO' && (!session.video?.vimeoVideoId || session.video.status !== 'READY'))) {
+            throw new BadRequestException('Every video lesson needs a ready Vimeo video before submitting');
+        }
+        for (const session of sessions) {
+            const quiz = session.questionnaire;
+            if (!quiz) continue;
+            if (!quiz.questions.length || quiz.questions.some(question => {
+                const correct = question.options.filter(option => option.isCorrect).length;
+                return question.options.length < 2 || correct < 1 || (question.type !== 'MULTIPLE_SELECT' && correct !== 1);
+            })) throw new BadRequestException('Complete every questionnaire and select its correct answers before submitting');
+        }
+
         // Close any previously PENDING submissions (edge-case safety)
         await this.prisma.courseSubmission.updateMany({
             where: { productId, status: SubmissionStatus.PENDING },
@@ -329,7 +345,7 @@ export class CoursePublishingService {
     private async findProductOrThrow(productId: string) {
         const product = await this.prisma.product.findUnique({
             where: { id: productId, type: 'COURSE' },
-            include: { course: true },
+            include: { course: { include: { sections: { include: { sessions: { include: { video: true, questionnaire: { include: { questions: { include: { options: true } } } } } } } } } } },
         });
 
         if (!product) {

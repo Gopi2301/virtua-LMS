@@ -39,18 +39,29 @@ export class CategoriesService {
                 where: {
                     slug: updateCategoryDto.slug
                 }
-            })
-            if (existing) {
-                throw new ConflictException("Category already exists")
+            });
+            if (existing && existing.id !== id) {
+                throw new ConflictException("Category already exists");
             }
-            data.slug = generateSlug(updateCategoryDto.slug)
+            data.slug = generateSlug(updateCategoryDto.slug);
+        } else if (updateCategoryDto.name) {
+            const slug = generateSlug(updateCategoryDto.name);
+            const existing = await this.prisma.category.findUnique({
+                where: {
+                    slug
+                }
+            });
+            if (existing && existing.id !== id) {
+                throw new ConflictException("Category already exists");
+            }
+            data.slug = slug;
         }
         return await this.prisma.category.update({
             where: {
                 id
             },
             data
-        })
+        });
     }
 
     async delete(id: string) {
@@ -88,6 +99,11 @@ export class CategoriesService {
         const [categories, total] = await Promise.all([
             this.prisma.category.findMany({
                 where,
+                include: {
+                    _count: {
+                        select: { courses: true }
+                    }
+                },
                 orderBy: {
                     createdAt: 'desc'
                 },

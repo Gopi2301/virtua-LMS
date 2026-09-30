@@ -18,7 +18,7 @@ export interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: any;
 }
 
-class ApiClient {
+export class ApiClient {
   private baseUrl: string;
 
   constructor(baseUrl: string) {
@@ -31,7 +31,7 @@ class ApiClient {
     try {
       await keycloak.updateToken(30);
     } catch (e) {
-      console.warn('Failed to update token before request', e);
+      throw new ApiError(401, 'Your session has expired. Sign in again.', e);
     }
 
     return keycloak.token;
@@ -117,3 +117,4 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient(ENV.API_URL);
+export const contentClient = new ApiClient(ENV.API_URL.replace(/\/api\/?$/, ''));

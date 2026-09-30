@@ -1,3 +1,8 @@
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { CourseContentGuard, ContentKind } from '../auth/course-content.guard';
 import {
   Body,
   Controller,
@@ -27,6 +32,9 @@ import {
 
 @ApiTags('Questionnaires')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard, CourseContentGuard)
+@Roles('AUTHOR', 'MANAGER', 'SUPER_ADMIN')
+@ContentKind('questionnaire')
 @Controller('questionnaires')
 export class QuestionnairesController {
   constructor(private readonly questionnairesService: QuestionnairesService) {}
@@ -174,3 +182,4 @@ export class QuestionnairesController {
     return this.questionnairesService.removeOption(qId, oId, req.user.id);
   }
 }
+

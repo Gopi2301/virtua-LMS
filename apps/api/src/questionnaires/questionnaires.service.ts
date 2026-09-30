@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -17,6 +18,14 @@ import {
 @Injectable()
 export class QuestionnairesService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private validateOptions(options: CreateOptionDto[] | undefined, type: string) {
+    if (!options) return;
+    const correct = options.filter(option => option.isCorrect).length;
+    if (options.length < 2 || options.some(option => !option.text.trim()) || correct < 1 || (type !== 'MULTIPLE_SELECT' && correct !== 1) || (type === 'TRUE_FALSE' && options.length !== 2)) {
+      throw new BadRequestException('Provide at least two answers and the correct answer(s) for this question type');
+    }
+  }
 
   private readonly treeInclude = {
     questions: {
@@ -248,6 +257,7 @@ export class QuestionnairesService {
    * Add a question to questionnaire
    */
   async addQuestion(questionnaireId: string, dto: CreateQuestionDto, userId: string) {
+    this.validateOptions(dto.options, dto.type ?? 'MULTIPLE_CHOICE');
     const q = await this.resolveQuestionnaireAuthor(questionnaireId);
 
     if (q.session.section.course.authorId !== userId) {
@@ -300,6 +310,7 @@ export class QuestionnairesService {
         type: dto.type,
         explanation: dto.explanation,
         position: targetPosition,
+        ...(dto.options ? { options: { create: dto.options.map((option, position) => ({ text: option.text.trim(), isCorrect: option.isCorrect ?? false, position })) } } : {}),
       },
       include: {
         options: {
@@ -326,6 +337,11 @@ export class QuestionnairesService {
 
     if (question.questionnaire.session.section.course.authorId !== userId) {
       throw new ForbiddenException('You can only update questions in your own courses');
+    }
+
+    this.validateOptions(dto.options, dto.type ?? question.type);
+    if (dto.options && dto.position !== undefined && dto.position !== question.position) {
+      throw new BadRequestException('Reorder and replace answers in separate requests');
     }
 
     if (dto.position !== undefined && dto.position !== question.position) {
@@ -402,6 +418,7 @@ export class QuestionnairesService {
         text: dto.text,
         type: dto.type,
         explanation: dto.explanation,
+        ...(dto.options ? { options: { deleteMany: {}, create: dto.options.map((option, position) => ({ text: option.text.trim(), isCorrect: option.isCorrect ?? false, position })) } } : {}),
       },
       include: {
         options: {

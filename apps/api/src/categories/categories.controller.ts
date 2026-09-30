@@ -1,3 +1,7 @@
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { Body, Controller, Post, Put, Delete, Get, Query, Param } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -12,6 +16,8 @@ export class CategoriesController {
     constructor(private readonly categoriesService: CategoriesService) { }
 
     @Post()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('MANAGER', 'SUPER_ADMIN')
     @ApiOperation({ summary: "Create a new category" })
     @ApiResponse({ status: 201, description: "Category created successfully", type: CreateCategoryDto })
     @ApiResponse({ status: 400, description: "Invalid request" })
@@ -20,6 +26,8 @@ export class CategoriesController {
     }
 
     @Put(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('MANAGER', 'SUPER_ADMIN')
     @ApiOperation({ summary: "Update a category" })
     @ApiResponse({ status: 200, description: "Category updated successfully", type: UpdateCategoryDto })
     @ApiResponse({ status: 400, description: "Invalid request" })
@@ -28,6 +36,8 @@ export class CategoriesController {
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('MANAGER', 'SUPER_ADMIN')
     @ApiOperation({ summary: "Delete a category" })
     @ApiResponse({ status: 200, description: "Category deleted successfully" })
     @ApiResponse({ status: 400, description: "Invalid request" })
@@ -43,3 +53,4 @@ export class CategoriesController {
     }
 
 }
+

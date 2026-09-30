@@ -1,0 +1,4795 @@
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/health": {
+            "get": {
+                "operationId": "AppController_getHealth",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "App"
+                ]
+            }
+        },
+        "/api/auth/config": {
+            "get": {
+                "operationId": "AuthController_getConfig",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/auth/me": {
+            "get": {
+                "operationId": "AuthController_getProfile",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/auth/admin-test": {
+            "get": {
+                "operationId": "AuthController_getAdminProtected",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/auth/student-test": {
+            "get": {
+                "operationId": "AuthController_getStudentProtected",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/users/profile": {
+            "get": {
+                "operationId": "UsersController_getProfile",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get current user profile from database",
+                "tags": [
+                    "users"
+                ]
+            },
+            "put": {
+                "operationId": "UsersController_updateProfile",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateProfileDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update current user profile",
+                "tags": [
+                    "users"
+                ]
+            }
+        },
+        "/api/admin/users": {
+            "get": {
+                "operationId": "AdminUsersController_findAll",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "default": 1,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "default": 20,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by search term in email, username, or name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by role",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "SUPER_ADMIN",
+                                "MANAGER",
+                                "AUTHOR",
+                                "STUDENT"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "isActive",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by active status",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List and search users with pagination and filtering",
+                "tags": [
+                    "admin-users"
+                ]
+            }
+        },
+        "/api/admin/users/{id}": {
+            "get": {
+                "operationId": "AdminUsersController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get user details by ID",
+                "tags": [
+                    "admin-users"
+                ]
+            }
+        },
+        "/api/admin/users/{id}/roles": {
+            "patch": {
+                "operationId": "AdminUsersController_updateRoles",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateRolesDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update user roles (Super Admin only)",
+                "tags": [
+                    "admin-users"
+                ]
+            }
+        },
+        "/api/admin/users/{id}/status": {
+            "patch": {
+                "operationId": "AdminUsersController_updateStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateStatusDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Activate or deactivate a user",
+                "tags": [
+                    "admin-users"
+                ]
+            }
+        },
+        "/api/authors/apply": {
+            "post": {
+                "operationId": "AuthorApplicationsController_apply",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateAuthorApplicationDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Submit an application to become an author/instructor",
+                "tags": [
+                    "author-applications"
+                ]
+            }
+        },
+        "/api/authors/my-application": {
+            "get": {
+                "operationId": "AuthorApplicationsController_getMyApplication",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Check status of current user instructor application",
+                "tags": [
+                    "author-applications"
+                ]
+            }
+        },
+        "/api/admin/author-applications": {
+            "get": {
+                "operationId": "AdminAuthorApplicationsController_findAll",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "enum": [
+                                "PENDING",
+                                "APPROVED",
+                                "REJECTED"
+                            ],
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List author applications with pagination and status filtering",
+                "tags": [
+                    "admin-author-applications"
+                ]
+            }
+        },
+        "/api/admin/author-applications/{id}": {
+            "get": {
+                "operationId": "AdminAuthorApplicationsController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get application details by ID",
+                "tags": [
+                    "admin-author-applications"
+                ]
+            }
+        },
+        "/api/admin/author-applications/{id}/review": {
+            "patch": {
+                "operationId": "AdminAuthorApplicationsController_review",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReviewAuthorApplicationDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Review (Approve or Reject) an author application",
+                "tags": [
+                    "admin-author-applications"
+                ]
+            }
+        },
+        "/courses": {
+            "post": {
+                "operationId": "CoursesController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateCourseDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Course created successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a new course",
+                "tags": [
+                    "Courses"
+                ]
+            }
+        },
+        "/courses/query": {
+            "get": {
+                "operationId": "CoursesController_query",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "course title",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "minimum": 1,
+                            "maximum": 100,
+                            "default": 1,
+                            "example": 1,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "default": 20,
+                            "example": 20,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "PUBLISHED",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "categoryId",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "cuid1234",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Courses fetched successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get all courses with pagination",
+                "tags": [
+                    "Courses"
+                ]
+            }
+        },
+        "/courses/{id}": {
+            "get": {
+                "operationId": "CoursesController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course fetched successfully"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a course by id",
+                "tags": [
+                    "Courses"
+                ]
+            },
+            "put": {
+                "operationId": "CoursesController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCourseDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Course updated successfully"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a course",
+                "tags": [
+                    "Courses"
+                ]
+            },
+            "delete": {
+                "operationId": "CoursesController_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course deleted successfully"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a course",
+                "tags": [
+                    "Courses"
+                ]
+            }
+        },
+        "/sections": {
+            "post": {
+                "operationId": "SectionsController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateSectionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Section created successfully"
+                    },
+                    "400": {
+                        "description": "Invalid input data"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a new course section",
+                "tags": [
+                    "Sections"
+                ]
+            }
+        },
+        "/sections/reorder": {
+            "post": {
+                "operationId": "SectionsController_reorder",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReorderSectionsDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Sections reordered successfully"
+                    },
+                    "400": {
+                        "description": "Invalid section IDs supplied"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Reorder sections within a course",
+                "tags": [
+                    "Sections"
+                ]
+            }
+        },
+        "/sections/course/{courseId}": {
+            "get": {
+                "operationId": "SectionsController_findAllByCourse",
+                "parameters": [
+                    {
+                        "name": "courseId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Course ID or Product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sections fetched successfully"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get all sections for a course (with sessions, videos, and resources)",
+                "tags": [
+                    "Sections"
+                ]
+            }
+        },
+        "/sections/{id}": {
+            "get": {
+                "operationId": "SectionsController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Section UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Section fetched successfully"
+                    },
+                    "404": {
+                        "description": "Section not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a section by ID",
+                "tags": [
+                    "Sections"
+                ]
+            },
+            "patch": {
+                "operationId": "SectionsController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Section UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSectionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Section updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Section not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a section",
+                "tags": [
+                    "Sections"
+                ]
+            },
+            "delete": {
+                "operationId": "SectionsController_remove",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Section UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Section deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Section not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a section",
+                "tags": [
+                    "Sections"
+                ]
+            }
+        },
+        "/sessions": {
+            "post": {
+                "operationId": "SessionsController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateSessionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Session created successfully"
+                    },
+                    "400": {
+                        "description": "Invalid input data"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Section not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a new course session inside a section",
+                "tags": [
+                    "Sessions"
+                ]
+            }
+        },
+        "/sessions/reorder": {
+            "post": {
+                "operationId": "SessionsController_reorder",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReorderSessionsDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Sessions reordered successfully"
+                    },
+                    "400": {
+                        "description": "Invalid session IDs supplied"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Section not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Reorder sessions within a section",
+                "tags": [
+                    "Sessions"
+                ]
+            }
+        },
+        "/sessions/section/{sectionId}": {
+            "get": {
+                "operationId": "SessionsController_findAllBySection",
+                "parameters": [
+                    {
+                        "name": "sectionId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Section UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sessions fetched successfully"
+                    },
+                    "404": {
+                        "description": "Section not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get all sessions for a section with video and resources",
+                "tags": [
+                    "Sessions"
+                ]
+            }
+        },
+        "/sessions/{id}": {
+            "get": {
+                "operationId": "SessionsController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Session UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session fetched successfully"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a session by ID",
+                "tags": [
+                    "Sessions"
+                ]
+            },
+            "patch": {
+                "operationId": "SessionsController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Session UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSessionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Session updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a session",
+                "tags": [
+                    "Sessions"
+                ]
+            },
+            "delete": {
+                "operationId": "SessionsController_remove",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Session UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a session",
+                "tags": [
+                    "Sessions"
+                ]
+            }
+        },
+        "/videos": {
+            "post": {
+                "operationId": "VideosController_attach",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AttachVideoDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Video attached successfully"
+                    },
+                    "400": {
+                        "description": "Invalid input data"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    },
+                    "409": {
+                        "description": "Video already attached to session or Vimeo ID collision"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Attach a video to a session (accepts Vimeo ID or generates dummy video)",
+                "tags": [
+                    "Videos"
+                ]
+            }
+        },
+        "/videos/{sessionId}": {
+            "get": {
+                "operationId": "VideosController_findBySessionId",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Session UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Video fetched successfully"
+                    },
+                    "404": {
+                        "description": "Session or video not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get video attached to a session",
+                "tags": [
+                    "Videos"
+                ]
+            },
+            "patch": {
+                "operationId": "VideosController_update",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Session UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateVideoDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Video updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Session or video not found"
+                    },
+                    "409": {
+                        "description": "Vimeo ID collision"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update video metadata for a session",
+                "tags": [
+                    "Videos"
+                ]
+            },
+            "delete": {
+                "operationId": "VideosController_remove",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Session UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Video detached successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Session or video not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Detach / delete video from a session",
+                "tags": [
+                    "Videos"
+                ]
+            }
+        },
+        "/resources": {
+            "post": {
+                "operationId": "ResourcesController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateResourceDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Resource created successfully"
+                    },
+                    "400": {
+                        "description": "Invalid input data"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Add a new resource to a session (URL, GitHub, or pre-uploaded file)",
+                "tags": [
+                    "Resources"
+                ]
+            }
+        },
+        "/resources/upload": {
+            "post": {
+                "operationId": "ResourcesController_uploadFile",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "sessionId": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "PDF",
+                                            "ZIP"
+                                        ]
+                                    },
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "required": [
+                                    "sessionId",
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "File uploaded and resource created"
+                    },
+                    "400": {
+                        "description": "No file provided or invalid input"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Upload and attach a file resource (PDF, ZIP) to a session",
+                "tags": [
+                    "Resources"
+                ]
+            }
+        },
+        "/resources/reorder": {
+            "post": {
+                "operationId": "ResourcesController_reorder",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReorderResourcesDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Resources reordered successfully"
+                    },
+                    "400": {
+                        "description": "Invalid resource IDs supplied"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Reorder resources within a session",
+                "tags": [
+                    "Resources"
+                ]
+            }
+        },
+        "/resources/session/{sessionId}": {
+            "get": {
+                "operationId": "ResourcesController_findAllBySession",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Session UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resources fetched successfully"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get all resources for a session",
+                "tags": [
+                    "Resources"
+                ]
+            }
+        },
+        "/resources/{id}": {
+            "get": {
+                "operationId": "ResourcesController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Resource UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resource fetched successfully"
+                    },
+                    "404": {
+                        "description": "Resource not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a resource by ID",
+                "tags": [
+                    "Resources"
+                ]
+            },
+            "patch": {
+                "operationId": "ResourcesController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Resource UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateResourceDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Resource updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Resource not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a resource",
+                "tags": [
+                    "Resources"
+                ]
+            },
+            "delete": {
+                "operationId": "ResourcesController_remove",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Resource UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resource deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Resource not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a resource",
+                "tags": [
+                    "Resources"
+                ]
+            }
+        },
+        "/questionnaires": {
+            "post": {
+                "operationId": "QuestionnairesController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateQuestionnaireDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Questionnaire created successfully"
+                    },
+                    "400": {
+                        "description": "Invalid input"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    },
+                    "409": {
+                        "description": "Questionnaire already exists for this session"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a questionnaire for a session",
+                "tags": [
+                    "Questionnaires"
+                ]
+            }
+        },
+        "/questionnaires/session/{sessionId}": {
+            "get": {
+                "operationId": "QuestionnairesController_findBySessionId",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Session UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Questionnaire fetched successfully"
+                    },
+                    "404": {
+                        "description": "Session or questionnaire not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get questionnaire with questions and options for a session",
+                "tags": [
+                    "Questionnaires"
+                ]
+            }
+        },
+        "/questionnaires/{id}": {
+            "get": {
+                "operationId": "QuestionnairesController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Questionnaire UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Questionnaire fetched successfully"
+                    },
+                    "404": {
+                        "description": "Questionnaire not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a questionnaire by ID with all questions and options",
+                "tags": [
+                    "Questionnaires"
+                ]
+            },
+            "patch": {
+                "operationId": "QuestionnairesController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Questionnaire UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateQuestionnaireDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Questionnaire updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Questionnaire not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update questionnaire settings",
+                "tags": [
+                    "Questionnaires"
+                ]
+            },
+            "delete": {
+                "operationId": "QuestionnairesController_remove",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Questionnaire UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Questionnaire deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Questionnaire not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a questionnaire",
+                "tags": [
+                    "Questionnaires"
+                ]
+            }
+        },
+        "/questionnaires/{id}/questions": {
+            "post": {
+                "operationId": "QuestionnairesController_addQuestion",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Questionnaire UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateQuestionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Question added successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Questionnaire not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Add a question to a questionnaire",
+                "tags": [
+                    "Questionnaires"
+                ]
+            }
+        },
+        "/questionnaires/{id}/questions/{qId}": {
+            "patch": {
+                "operationId": "QuestionnairesController_updateQuestion",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Questionnaire UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "qId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Question UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateQuestionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Question updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Question not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a question in a questionnaire",
+                "tags": [
+                    "Questionnaires"
+                ]
+            },
+            "delete": {
+                "operationId": "QuestionnairesController_removeQuestion",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Questionnaire UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "qId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Question UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Question deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Question not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a question from a questionnaire",
+                "tags": [
+                    "Questionnaires"
+                ]
+            }
+        },
+        "/questionnaires/questions/{qId}/options": {
+            "post": {
+                "operationId": "QuestionnairesController_addOption",
+                "parameters": [
+                    {
+                        "name": "qId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Question UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateOptionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Option added successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Question not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Add an answer option to a question",
+                "tags": [
+                    "Questionnaires"
+                ]
+            }
+        },
+        "/questionnaires/questions/{qId}/options/{oId}": {
+            "patch": {
+                "operationId": "QuestionnairesController_updateOption",
+                "parameters": [
+                    {
+                        "name": "qId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Question UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "oId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Option UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateOptionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Option updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Option not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update an answer option",
+                "tags": [
+                    "Questionnaires"
+                ]
+            },
+            "delete": {
+                "operationId": "QuestionnairesController_removeOption",
+                "parameters": [
+                    {
+                        "name": "qId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Question UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "oId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Option UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Option deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Option not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete an answer option",
+                "tags": [
+                    "Questionnaires"
+                ]
+            }
+        },
+        "/bundles": {
+            "post": {
+                "operationId": "BundlesController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateBundleDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Bundle created successfully"
+                    },
+                    "400": {
+                        "description": "Invalid input"
+                    },
+                    "409": {
+                        "description": "Product slug conflict"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a new course bundle",
+                "tags": [
+                    "Bundles"
+                ]
+            },
+            "get": {
+                "operationId": "BundlesController_findAll",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "Search keyword matching bundle title or description",
+                        "schema": {
+                            "example": "web development",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by product status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "DRAFT",
+                                "IN_REVIEW",
+                                "APPROVED",
+                                "CHANGES_REQUESTED",
+                                "ON_AIR",
+                                "OFF_AIR",
+                                "ARCHIVED"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "authorId",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by author UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "default": 1,
+                            "example": 1,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "description": "Items per page",
+                        "schema": {
+                            "default": 10,
+                            "example": 10,
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bundles fetched successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List bundles with pagination and filters",
+                "tags": [
+                    "Bundles"
+                ]
+            }
+        },
+        "/bundles/{id}": {
+            "get": {
+                "operationId": "BundlesController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Bundle UUID or slug",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bundle fetched successfully"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a bundle by ID or slug with included courses",
+                "tags": [
+                    "Bundles"
+                ]
+            },
+            "patch": {
+                "operationId": "BundlesController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Bundle UUID or product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateBundleDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Bundle updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update bundle metadata",
+                "tags": [
+                    "Bundles"
+                ]
+            },
+            "delete": {
+                "operationId": "BundlesController_remove",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Bundle UUID or product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bundle deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Bundle not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a bundle",
+                "tags": [
+                    "Bundles"
+                ]
+            }
+        },
+        "/bundles/{id}/courses": {
+            "post": {
+                "operationId": "BundlesController_addCourse",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Bundle UUID or product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddCourseToBundleDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Course added to bundle"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Bundle or course not found"
+                    },
+                    "409": {
+                        "description": "Course already exists in this bundle"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Add a course to a bundle",
+                "tags": [
+                    "Bundles"
+                ]
+            }
+        },
+        "/bundles/{id}/courses/{courseId}": {
+            "delete": {
+                "operationId": "BundlesController_removeCourse",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Bundle UUID or product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "courseId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Course UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course removed from bundle"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Bundle or course link not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Remove a course from a bundle",
+                "tags": [
+                    "Bundles"
+                ]
+            }
+        },
+        "/workshops": {
+            "post": {
+                "operationId": "WorkshopsController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateWorkshopDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Workshop created successfully"
+                    },
+                    "400": {
+                        "description": "Invalid input"
+                    },
+                    "409": {
+                        "description": "Product slug conflict"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a new live workshop",
+                "tags": [
+                    "Workshops"
+                ]
+            },
+            "get": {
+                "operationId": "WorkshopsController_findAll",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "Search query matching title or description",
+                        "schema": {
+                            "example": "microservices",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by live workshop status (SCHEDULED, LIVE, COMPLETED, CANCELLED)",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "SCHEDULED",
+                                "LIVE",
+                                "COMPLETED",
+                                "CANCELLED"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "productStatus",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by product status (DRAFT, IN_REVIEW, APPROVED, ON_AIR, OFF_AIR, ARCHIVED)",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "DRAFT",
+                                "IN_REVIEW",
+                                "APPROVED",
+                                "CHANGES_REQUESTED",
+                                "ON_AIR",
+                                "OFF_AIR",
+                                "ARCHIVED"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "authorId",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by author UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "isFree",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter free workshops only",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "default": 1,
+                            "example": 1,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "description": "Items per page",
+                        "schema": {
+                            "default": 10,
+                            "example": 10,
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Workshops fetched successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List workshops with pagination and filters",
+                "tags": [
+                    "Workshops"
+                ]
+            }
+        },
+        "/workshops/{id}": {
+            "get": {
+                "operationId": "WorkshopsController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Workshop UUID or slug",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Workshop fetched successfully"
+                    },
+                    "404": {
+                        "description": "Workshop not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a workshop by ID or slug",
+                "tags": [
+                    "Workshops"
+                ]
+            },
+            "patch": {
+                "operationId": "WorkshopsController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Workshop UUID or product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateWorkshopDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Workshop updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Workshop not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update workshop details and schedule",
+                "tags": [
+                    "Workshops"
+                ]
+            },
+            "delete": {
+                "operationId": "WorkshopsController_remove",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Workshop UUID or product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Workshop deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Workshop not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a workshop",
+                "tags": [
+                    "Workshops"
+                ]
+            }
+        },
+        "/workshops/{id}/status": {
+            "post": {
+                "operationId": "WorkshopsController_updateStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Workshop UUID or product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateWorkshopStatusDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden: Author mismatch"
+                    },
+                    "404": {
+                        "description": "Workshop not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update workshop live status (SCHEDULED, LIVE, COMPLETED, CANCELLED)",
+                "tags": [
+                    "Workshops"
+                ]
+            }
+        },
+        "/categories": {
+            "post": {
+                "operationId": "CategoriesController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateCategoryDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Category created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreateCategoryDto"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a new category",
+                "tags": [
+                    "Categories"
+                ]
+            }
+        },
+        "/categories/{id}": {
+            "put": {
+                "operationId": "CategoriesController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCategoryDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Category updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateCategoryDto"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a category",
+                "tags": [
+                    "Categories"
+                ]
+            },
+            "delete": {
+                "operationId": "CategoriesController_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a category",
+                "tags": [
+                    "Categories"
+                ]
+            }
+        },
+        "/categories/query": {
+            "get": {
+                "operationId": "CategoriesController_query",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "backend",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "minimum": 1,
+                            "maximum": 100,
+                            "default": 1,
+                            "example": 1,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "default": 20,
+                            "example": 20,
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Categories fetched successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CreateCategoryDto"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get all categories with pagination",
+                "tags": [
+                    "Categories"
+                ]
+            }
+        },
+        "/courses/{id}/publishing/submit": {
+            "post": {
+                "description": "Author submits a DRAFT or CHANGES_REQUESTED course for approval. Moves status to IN_REVIEW.",
+                "operationId": "CoursePublishingController_submitForReview",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Course product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubmitForReviewDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Course submitted for review"
+                    },
+                    "400": {
+                        "description": "Invalid transition or missing submission"
+                    },
+                    "403": {
+                        "description": "Not the course author"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Submit course for manager review",
+                "tags": [
+                    "Course Publishing"
+                ]
+            }
+        },
+        "/courses/{id}/publishing/approve": {
+            "post": {
+                "description": "Moves status from IN_REVIEW → APPROVED.",
+                "operationId": "CoursePublishingController_approve",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Course product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReviewDecisionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Course approved"
+                    },
+                    "400": {
+                        "description": "Invalid transition"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Approve a submitted course",
+                "tags": [
+                    "Course Publishing"
+                ]
+            }
+        },
+        "/courses/{id}/publishing/request-changes": {
+            "post": {
+                "description": "Moves status from IN_REVIEW → CHANGES_REQUESTED. A review comment is required.",
+                "operationId": "CoursePublishingController_requestChanges",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Course product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReviewDecisionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Changes requested"
+                    },
+                    "400": {
+                        "description": "Comment required or invalid transition"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Request changes on a submitted course",
+                "tags": [
+                    "Course Publishing"
+                ]
+            }
+        },
+        "/courses/{id}/publishing/publish": {
+            "post": {
+                "description": "Moves status from APPROVED → ON_AIR.",
+                "operationId": "CoursePublishingController_publish",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Course product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Course published and now ON_AIR"
+                    },
+                    "400": {
+                        "description": "Course not in APPROVED state"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Publish an approved course",
+                "tags": [
+                    "Course Publishing"
+                ]
+            }
+        },
+        "/courses/{id}/publishing/unpublish": {
+            "post": {
+                "description": "Moves status from ON_AIR → DRAFT.",
+                "operationId": "CoursePublishingController_unpublish",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Course product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Course unpublished"
+                    },
+                    "400": {
+                        "description": "Course not ON_AIR"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Unpublish a live course",
+                "tags": [
+                    "Course Publishing"
+                ]
+            }
+        },
+        "/courses/{id}/publishing/archive": {
+            "post": {
+                "description": "Moves course to ARCHIVED (terminal state).",
+                "operationId": "CoursePublishingController_archive",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Course product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Course archived"
+                    },
+                    "400": {
+                        "description": "Invalid state for archiving"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Archive a course",
+                "tags": [
+                    "Course Publishing"
+                ]
+            }
+        },
+        "/courses/{id}/publishing/submissions": {
+            "get": {
+                "description": "Returns all past submission cycles for the course.",
+                "operationId": "CoursePublishingController_getSubmissionHistory",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Course product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Submission history"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get submission history for a course",
+                "tags": [
+                    "Course Publishing"
+                ]
+            }
+        },
+        "/course-publishing/review-queue": {
+            "get": {
+                "description": "Returns courses pending review (or filtered by submission status).",
+                "operationId": "CoursePublishingQueueController_getReviewQueue",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by submission status",
+                        "schema": {
+                            "default": "PENDING",
+                            "type": "string",
+                            "enum": [
+                                "PENDING",
+                                "APPROVED",
+                                "CHANGES_REQUESTED"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "default": 1,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "description": "Items per page",
+                        "schema": {
+                            "default": 20,
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated review queue"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get the manager review queue",
+                "tags": [
+                    "Course Publishing"
+                ]
+            }
+        },
+        "/enrollments": {
+            "post": {
+                "operationId": "EnrollmentsController_enroll",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EnrollDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Enrollment created"
+                    },
+                    "400": {
+                        "description": "Product not published or invalid type"
+                    },
+                    "409": {
+                        "description": "Already enrolled"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Enroll in a course or bundle",
+                "tags": [
+                    "Enrollments"
+                ]
+            }
+        },
+        "/enrollments/me": {
+            "get": {
+                "operationId": "EnrollmentsController_findMine",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ACTIVE",
+                                "REVOKED",
+                                "EXPIRED"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "default": 1,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "default": 20,
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of my enrollments"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get my enrollments",
+                "tags": [
+                    "Enrollments"
+                ]
+            }
+        },
+        "/enrollments/product/{productId}": {
+            "get": {
+                "operationId": "EnrollmentsController_findByProduct",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Product ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ACTIVE",
+                                "REVOKED",
+                                "EXPIRED"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "default": 1,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "default": 20,
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated enrollment list"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List all enrollments for a product (manager)",
+                "tags": [
+                    "Enrollments"
+                ]
+            }
+        },
+        "/enrollments/{id}": {
+            "get": {
+                "operationId": "EnrollmentsController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Enrollment ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Enrollment details"
+                    },
+                    "403": {
+                        "description": "Access denied"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a single enrollment (owner or manager)",
+                "tags": [
+                    "Enrollments"
+                ]
+            }
+        },
+        "/enrollments/{id}/revoke": {
+            "post": {
+                "operationId": "EnrollmentsController_revoke",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Enrollment ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Enrollment revoked"
+                    },
+                    "400": {
+                        "description": "Not active"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Revoke an enrollment",
+                "tags": [
+                    "Enrollments"
+                ]
+            }
+        },
+        "/enrollments/{enrollmentId}/progress": {
+            "get": {
+                "operationId": "ProgressController_getProgress",
+                "parameters": [
+                    {
+                        "name": "enrollmentId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Enrollment ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Progress breakdown per session"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get full progress for an enrollment",
+                "tags": [
+                    "Progress"
+                ]
+            },
+            "post": {
+                "operationId": "ProgressController_updateProgress",
+                "parameters": [
+                    {
+                        "name": "enrollmentId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Enrollment ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateProgressDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Progress updated"
+                    },
+                    "400": {
+                        "description": "Session not in enrollment or enrollment inactive"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update session progress (watch time / mark complete)",
+                "tags": [
+                    "Progress"
+                ]
+            }
+        },
+        "/certificates/verify/{code}": {
+            "get": {
+                "operationId": "CertificatesController_verify",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "required": true,
+                        "in": "path",
+                        "description": "Human-readable certificate code",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Certificate details"
+                    },
+                    "404": {
+                        "description": "Invalid code"
+                    }
+                },
+                "summary": "Verify a certificate by its code (public)",
+                "tags": [
+                    "Certificates"
+                ]
+            }
+        },
+        "/certificates/me": {
+            "get": {
+                "operationId": "CertificatesController_findMine",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "List of certificates earned"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get my certificates",
+                "tags": [
+                    "Certificates"
+                ]
+            }
+        },
+        "/certificates/{id}": {
+            "get": {
+                "operationId": "CertificatesController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Certificate ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Certificate details"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a certificate by ID",
+                "tags": [
+                    "Certificates"
+                ]
+            }
+        },
+        "/enrollments/{enrollmentId}/certificate": {
+            "post": {
+                "operationId": "EnrollmentCertificateController_issue",
+                "parameters": [
+                    {
+                        "name": "enrollmentId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Enrollment ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Certificate issued"
+                    },
+                    "400": {
+                        "description": "Course not 100% complete"
+                    },
+                    "409": {
+                        "description": "Certificate already issued"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Issue certificate for a completed enrollment",
+                "tags": [
+                    "Certificates"
+                ]
+            }
+        }
+    },
+    "info": {
+        "title": "VirtuaLMS API",
+        "description": "The VirtuaLMS API description",
+        "version": "1.0",
+        "contact": {}
+    },
+    "tags": [],
+    "servers": [],
+    "components": {
+        "securitySchemes": {
+            "bearer": {
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "type": "http"
+            }
+        },
+        "schemas": {
+            "UpdateProfileDto": {
+                "type": "object",
+                "properties": {
+                    "firstName": {
+                        "type": "string",
+                        "example": "John"
+                    },
+                    "lastName": {
+                        "type": "string",
+                        "example": "Doe"
+                    },
+                    "bio": {
+                        "type": "string",
+                        "example": "Software engineer and enthusiast educator."
+                    },
+                    "avatarUrl": {
+                        "type": "string",
+                        "example": "https://images.unsplash.com/photo-1534528741775-53994a69daeb"
+                    }
+                }
+            },
+            "UpdateRolesDto": {
+                "type": "object",
+                "properties": {
+                    "roles": {
+                        "type": "array",
+                        "example": [
+                            "AUTHOR",
+                            "STUDENT"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "SUPER_ADMIN",
+                                "MANAGER",
+                                "AUTHOR",
+                                "STUDENT"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "roles"
+                ]
+            },
+            "UpdateStatusDto": {
+                "type": "object",
+                "properties": {
+                    "isActive": {
+                        "type": "boolean",
+                        "example": false,
+                        "description": "True to activate, false to deactivate"
+                    }
+                },
+                "required": [
+                    "isActive"
+                ]
+            },
+            "CreateAuthorApplicationDto": {
+                "type": "object",
+                "properties": {
+                    "headline": {
+                        "type": "string",
+                        "example": "Senior Full-Stack Engineer & Cloud Architect"
+                    },
+                    "bio": {
+                        "type": "string",
+                        "example": "10+ years building scalable distributed systems and mentoring engineering teams."
+                    },
+                    "expertise": {
+                        "example": [
+                            "TypeScript",
+                            "NestJS",
+                            "PostgreSQL",
+                            "Docker"
+                        ],
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "portfolioUrl": {
+                        "type": "string",
+                        "example": "https://linkedin.com/in/username"
+                    },
+                    "sampleVideo": {
+                        "type": "string",
+                        "example": "https://youtube.com/watch?v=sample-video"
+                    }
+                },
+                "required": [
+                    "headline",
+                    "bio",
+                    "expertise"
+                ]
+            },
+            "ReviewAuthorApplicationDto": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "APPROVED",
+                            "REJECTED"
+                        ],
+                        "example": "APPROVED"
+                    },
+                    "reviewNotes": {
+                        "type": "string",
+                        "example": "Great profile and teaching experience. Welcome to Virtua!"
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            },
+            "CreateCourseDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Complete Node.js Backend Development",
+                        "description": "Course title"
+                    },
+                    "shortDescription": {
+                        "type": "string",
+                        "example": "Learn Node.js, Express, PostgreSQL and backend architecture.",
+                        "description": "Short description displayed in course cards and listings"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "A complete backend development course covering Node.js, Express, PostgreSQL, authentication and production deployment.",
+                        "description": "Full course description"
+                    },
+                    "level": {
+                        "type": "string",
+                        "enum": [
+                            "BEGINNER",
+                            "INTERMEDIATE",
+                            "ADVANCED",
+                            "ALL_LEVELS"
+                        ],
+                        "example": "BEGINNER"
+                    },
+                    "language": {
+                        "type": "string",
+                        "example": "en",
+                        "default": "en"
+                    },
+                    "categoryId": {
+                        "type": "string",
+                        "example": "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1234",
+                        "description": "Course category ID"
+                    },
+                    "thumbnail": {
+                        "type": "string",
+                        "example": "https://cdn.example.com/courses/nodejs.jpg",
+                        "description": "Course thumbnail URL"
+                    }
+                },
+                "required": [
+                    "title",
+                    "level"
+                ]
+            },
+            "UpdateCourseDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Complete Node.js Backend Development",
+                        "description": "Course title"
+                    },
+                    "shortDescription": {
+                        "type": "string",
+                        "example": "Learn Node.js, Express, PostgreSQL and backend architecture.",
+                        "description": "Short description displayed in course cards and listings"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "A complete backend development course covering Node.js, Express, PostgreSQL, authentication and production deployment.",
+                        "description": "Full course description"
+                    },
+                    "level": {
+                        "type": "string",
+                        "enum": [
+                            "BEGINNER",
+                            "INTERMEDIATE",
+                            "ADVANCED",
+                            "ALL_LEVELS"
+                        ],
+                        "example": "BEGINNER"
+                    },
+                    "language": {
+                        "type": "string",
+                        "example": "en",
+                        "default": "en"
+                    },
+                    "categoryId": {
+                        "type": "string",
+                        "example": "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1234",
+                        "description": "Course category ID"
+                    },
+                    "thumbnail": {
+                        "type": "string",
+                        "example": "https://cdn.example.com/courses/nodejs.jpg",
+                        "description": "Course thumbnail URL"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "DRAFT",
+                            "IN_REVIEW",
+                            "APPROVED",
+                            "CHANGES_REQUESTED",
+                            "ON_AIR",
+                            "OFF_AIR",
+                            "ARCHIVED"
+                        ],
+                        "example": "DRAFT"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "COURSE",
+                            "BUNDLE",
+                            "WORKSHOP"
+                        ],
+                        "example": "COURSE"
+                    }
+                }
+            },
+            "CreateSectionDto": {
+                "type": "object",
+                "properties": {
+                    "courseId": {
+                        "type": "string",
+                        "example": "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1234",
+                        "description": "Course ID or Product ID to attach this section to"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Module 1: Getting Started",
+                        "description": "Section title"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Introduction, environment setup and prerequisites",
+                        "description": "Section description"
+                    },
+                    "position": {
+                        "type": "number",
+                        "example": 0,
+                        "description": "Position index within the course (auto-calculated as next position if omitted)"
+                    }
+                },
+                "required": [
+                    "courseId",
+                    "title"
+                ]
+            },
+            "ReorderSectionsDto": {
+                "type": "object",
+                "properties": {
+                    "courseId": {
+                        "type": "string",
+                        "example": "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1234",
+                        "description": "Course ID or Product ID"
+                    },
+                    "sectionIds": {
+                        "example": [
+                            "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1111",
+                            "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d2222",
+                            "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d3333"
+                        ],
+                        "description": "Array of Section IDs in the desired order (index will become the position)",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "courseId",
+                    "sectionIds"
+                ]
+            },
+            "UpdateSectionDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Module 1: Advanced Fundamentals",
+                        "description": "Updated section title"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Updated section description and detailed overview",
+                        "description": "Updated section description"
+                    },
+                    "position": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "Position index within the course"
+                    }
+                }
+            },
+            "CreateSessionDto": {
+                "type": "object",
+                "properties": {
+                    "sectionId": {
+                        "type": "string",
+                        "example": "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1234",
+                        "description": "Section ID to attach this session to"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Session 1: Introduction to NestJS Architecture",
+                        "description": "Session title"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "In this session, we will cover controllers, providers, and modules.",
+                        "description": "Session description"
+                    },
+                    "position": {
+                        "type": "number",
+                        "example": 0,
+                        "description": "Position index within the section (auto-calculated if omitted)"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "VIDEO",
+                            "TEXT",
+                            "LIVE"
+                        ],
+                        "default": "VIDEO",
+                        "description": "Type of session (VIDEO, TEXT, LIVE)"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "VIDEO",
+                            "TEXT",
+                            "LIVE"
+                        ],
+                        "description": "Alias for type (status field in Prisma model)"
+                    },
+                    "isPreview": {
+                        "type": "boolean",
+                        "example": false,
+                        "default": false,
+                        "description": "Whether this session is accessible as a public preview"
+                    },
+                    "isFree": {
+                        "type": "boolean",
+                        "example": false,
+                        "default": false,
+                        "description": "Whether this session is free to view without enrollment"
+                    }
+                },
+                "required": [
+                    "sectionId",
+                    "title"
+                ]
+            },
+            "ReorderSessionsDto": {
+                "type": "object",
+                "properties": {
+                    "sectionId": {
+                        "type": "string",
+                        "example": "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1234",
+                        "description": "Section ID whose sessions are being reordered"
+                    },
+                    "sessionIds": {
+                        "example": [
+                            "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1111",
+                            "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d2222",
+                            "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d3333"
+                        ],
+                        "description": "Array of Session IDs in the desired order (index will become the position)",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "sectionId",
+                    "sessionIds"
+                ]
+            },
+            "UpdateSessionDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Updated Session Title",
+                        "description": "Session title"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Updated description of what will be learned in this session.",
+                        "description": "Session description"
+                    },
+                    "position": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "New position index within the section"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "VIDEO",
+                            "TEXT",
+                            "LIVE"
+                        ],
+                        "description": "Session type (VIDEO, TEXT, LIVE)"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "VIDEO",
+                            "TEXT",
+                            "LIVE"
+                        ],
+                        "description": "Alias for type (status field in Prisma model)"
+                    },
+                    "isPreview": {
+                        "type": "boolean",
+                        "example": true,
+                        "description": "Whether this session is marked as preview"
+                    },
+                    "isFree": {
+                        "type": "boolean",
+                        "example": true,
+                        "description": "Whether this session is free to view"
+                    }
+                }
+            },
+            "AttachVideoDto": {
+                "type": "object",
+                "properties": {
+                    "sessionId": {
+                        "type": "string",
+                        "example": "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1234",
+                        "description": "Session UUID to attach this video to"
+                    },
+                    "vimeoVideoId": {
+                        "type": "string",
+                        "example": "892716382",
+                        "description": "Vimeo Video ID. If omitted, a dummy mock Vimeo video will be generated for development/testing."
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Course Overview and Introduction",
+                        "description": "Video title (defaults to session title if omitted)"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Detailed walkthrough of the module curriculum",
+                        "description": "Video description"
+                    },
+                    "duration": {
+                        "type": "number",
+                        "example": 360,
+                        "description": "Duration in seconds (defaults to 300 if omitted in dummy mode)"
+                    },
+                    "thumbnail": {
+                        "type": "string",
+                        "example": "https://vumbnail.com/892716382.jpg",
+                        "description": "Video thumbnail URL"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "UPLOADING",
+                            "PROCESSING",
+                            "READY",
+                            "FAILED"
+                        ],
+                        "default": "READY",
+                        "description": "Current video status (UPLOADING, PROCESSING, READY, FAILED)"
+                    }
+                },
+                "required": [
+                    "sessionId"
+                ]
+            },
+            "UpdateVideoDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Updated Video Title",
+                        "description": "Video title"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Updated description of the lecture video",
+                        "description": "Video description"
+                    },
+                    "vimeoVideoId": {
+                        "type": "string",
+                        "example": "918273645",
+                        "description": "Vimeo Video ID"
+                    },
+                    "duration": {
+                        "type": "number",
+                        "example": 420,
+                        "description": "Duration in seconds"
+                    },
+                    "thumbnail": {
+                        "type": "string",
+                        "example": "https://vumbnail.com/918273645.jpg",
+                        "description": "Video thumbnail URL"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "UPLOADING",
+                            "PROCESSING",
+                            "READY",
+                            "FAILED"
+                        ],
+                        "description": "Current video status"
+                    }
+                }
+            },
+            "CreateResourceDto": {
+                "type": "object",
+                "properties": {
+                    "sessionId": {
+                        "type": "string",
+                        "example": "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1234",
+                        "description": "Session UUID to attach this resource to"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Lesson Cheatsheet & Slides",
+                        "description": "Title of the resource"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "PDF",
+                            "ZIP",
+                            "EXTERNAL_LINK",
+                            "GITHUB"
+                        ],
+                        "example": "PDF",
+                        "description": "Type of resource (PDF, ZIP, EXTERNAL_LINK, GITHUB)"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://github.com/example/course-repo",
+                        "description": "External link or download URL for the resource"
+                    },
+                    "storageKey": {
+                        "type": "string",
+                        "example": "resources/1727680000_cheatsheet.pdf",
+                        "description": "Storage key on server / S3 storage for downloadable files"
+                    },
+                    "fileName": {
+                        "type": "string",
+                        "example": "cheatsheet.pdf",
+                        "description": "Original file name"
+                    },
+                    "fileSize": {
+                        "type": "number",
+                        "example": 1048576,
+                        "description": "File size in bytes"
+                    },
+                    "mimeType": {
+                        "type": "string",
+                        "example": "application/pdf",
+                        "description": "MIME type of the resource file"
+                    },
+                    "position": {
+                        "type": "number",
+                        "example": 0,
+                        "description": "Position index within the session (auto-assigned if omitted)"
+                    }
+                },
+                "required": [
+                    "sessionId",
+                    "title",
+                    "type"
+                ]
+            },
+            "ReorderResourcesDto": {
+                "type": "object",
+                "properties": {
+                    "sessionId": {
+                        "type": "string",
+                        "example": "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1234",
+                        "description": "Session UUID whose resources are being reordered"
+                    },
+                    "resourceIds": {
+                        "example": [
+                            "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1111",
+                            "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d2222",
+                            "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d3333"
+                        ],
+                        "description": "Array of Resource IDs in the desired order (index will become the position)",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "sessionId",
+                    "resourceIds"
+                ]
+            },
+            "UpdateResourceDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Updated Resource Title",
+                        "description": "Title of the resource"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "PDF",
+                            "ZIP",
+                            "EXTERNAL_LINK",
+                            "GITHUB"
+                        ],
+                        "description": "Type of resource (PDF, ZIP, EXTERNAL_LINK, GITHUB)"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://github.com/example/updated-course-repo",
+                        "description": "External link or download URL for the resource"
+                    },
+                    "storageKey": {
+                        "type": "string",
+                        "example": "resources/1727680000_updated_cheatsheet.pdf",
+                        "description": "Storage key on server / S3 storage"
+                    },
+                    "fileName": {
+                        "type": "string",
+                        "example": "updated_cheatsheet.pdf",
+                        "description": "Original file name"
+                    },
+                    "fileSize": {
+                        "type": "number",
+                        "example": 2097152,
+                        "description": "File size in bytes"
+                    },
+                    "mimeType": {
+                        "type": "string",
+                        "example": "application/pdf",
+                        "description": "MIME type of the resource file"
+                    },
+                    "position": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "New position index within the session"
+                    }
+                }
+            },
+            "CreateQuestionnaireDto": {
+                "type": "object",
+                "properties": {
+                    "sessionId": {
+                        "type": "string",
+                        "example": "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1234",
+                        "description": "Session UUID to attach this questionnaire to"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Module 1 Knowledge Check",
+                        "description": "Title of the questionnaire / quiz"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Test your understanding of NestJS fundamentals and controllers.",
+                        "description": "Description or instructions for the questionnaire"
+                    },
+                    "passingScore": {
+                        "type": "number",
+                        "example": 70,
+                        "default": 0,
+                        "description": "Minimum percentage score required to pass (0 = no passing score requirement)"
+                    },
+                    "maxAttempts": {
+                        "type": "number",
+                        "example": 3,
+                        "default": 0,
+                        "description": "Maximum number of attempts allowed (0 = unlimited)"
+                    }
+                },
+                "required": [
+                    "sessionId",
+                    "title"
+                ]
+            },
+            "UpdateQuestionnaireDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Updated Questionnaire Title",
+                        "description": "Title of the questionnaire"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Updated instructions for quiz takers",
+                        "description": "Description of the questionnaire"
+                    },
+                    "passingScore": {
+                        "type": "number",
+                        "example": 80,
+                        "description": "Minimum percentage score required to pass (0-100)"
+                    },
+                    "maxAttempts": {
+                        "type": "number",
+                        "example": 5,
+                        "description": "Maximum number of attempts allowed (0 = unlimited)"
+                    }
+                }
+            },
+            "CreateQuestionDto": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "example": "What decorator defines a controller in NestJS?",
+                        "description": "The question text"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "MULTIPLE_CHOICE",
+                            "MULTIPLE_SELECT",
+                            "TRUE_FALSE"
+                        ],
+                        "default": "MULTIPLE_CHOICE",
+                        "description": "Type of question (MULTIPLE_CHOICE, MULTIPLE_SELECT, TRUE_FALSE)"
+                    },
+                    "explanation": {
+                        "type": "string",
+                        "example": "Controllers in NestJS are decorated with @Controller() to define routing paths.",
+                        "description": "Explanation shown to students after answering"
+                    },
+                    "position": {
+                        "type": "number",
+                        "example": 0,
+                        "description": "Position order of the question within the quiz"
+                    }
+                },
+                "required": [
+                    "text"
+                ]
+            },
+            "UpdateQuestionDto": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "example": "Updated question text",
+                        "description": "The question text"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "MULTIPLE_CHOICE",
+                            "MULTIPLE_SELECT",
+                            "TRUE_FALSE"
+                        ],
+                        "description": "Type of question (MULTIPLE_CHOICE, MULTIPLE_SELECT, TRUE_FALSE)"
+                    },
+                    "explanation": {
+                        "type": "string",
+                        "example": "Updated explanation",
+                        "description": "Explanation shown to students after answering"
+                    },
+                    "position": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "Position order of the question within the quiz"
+                    }
+                }
+            },
+            "CreateOptionDto": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "example": "@Controller()",
+                        "description": "Answer option text"
+                    },
+                    "isCorrect": {
+                        "type": "boolean",
+                        "example": true,
+                        "default": false,
+                        "description": "Whether this option is a correct answer"
+                    },
+                    "position": {
+                        "type": "number",
+                        "example": 0,
+                        "description": "Position order of this option among choices"
+                    }
+                },
+                "required": [
+                    "text"
+                ]
+            },
+            "UpdateOptionDto": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "example": "Updated option text",
+                        "description": "Answer option text"
+                    },
+                    "isCorrect": {
+                        "type": "boolean",
+                        "example": true,
+                        "description": "Whether this option is a correct answer"
+                    },
+                    "position": {
+                        "type": "number",
+                        "example": 1,
+                        "description": "Position order of this option among choices"
+                    }
+                }
+            },
+            "CreateBundleDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Full Stack Web Development Bundle",
+                        "description": "Title of the course bundle"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Get all our premium web development courses in one cost-effective package.",
+                        "description": "Detailed description of the bundle"
+                    },
+                    "shortDescription": {
+                        "type": "string",
+                        "example": "All frontend and backend courses bundled together.",
+                        "description": "Short summary of the bundle"
+                    },
+                    "thumbnail": {
+                        "type": "string",
+                        "example": "https://cdn.example.com/thumbnails/bundle-webdev.jpg",
+                        "description": "Cover thumbnail URL for the bundle"
+                    },
+                    "courseIds": {
+                        "example": [
+                            "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1111",
+                            "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d2222"
+                        ],
+                        "description": "Array of Course IDs to initially include in this bundle",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "title"
+                ]
+            },
+            "UpdateBundleDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Updated Bundle Title",
+                        "description": "Title of the course bundle"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Updated comprehensive description of the bundle package.",
+                        "description": "Detailed description of the bundle"
+                    },
+                    "shortDescription": {
+                        "type": "string",
+                        "example": "Updated short summary",
+                        "description": "Short summary of the bundle"
+                    },
+                    "thumbnail": {
+                        "type": "string",
+                        "example": "https://cdn.example.com/thumbnails/updated-bundle.jpg",
+                        "description": "Cover thumbnail URL"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "DRAFT",
+                            "IN_REVIEW",
+                            "APPROVED",
+                            "CHANGES_REQUESTED",
+                            "ON_AIR",
+                            "OFF_AIR",
+                            "ARCHIVED"
+                        ],
+                        "description": "Product lifecycle status (DRAFT, IN_REVIEW, APPROVED, ON_AIR, OFF_AIR, ARCHIVED)"
+                    }
+                }
+            },
+            "AddCourseToBundleDto": {
+                "type": "object",
+                "properties": {
+                    "courseId": {
+                        "type": "string",
+                        "example": "2b7c3f7a-2d2d-4f3b-9e7f-7b6a9c5d1111",
+                        "description": "Course ID or Product ID of the course to add to this bundle"
+                    }
+                },
+                "required": [
+                    "courseId"
+                ]
+            },
+            "CreateWorkshopDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Live Interactive Masterclass: Microservices with NestJS",
+                        "description": "Title of the workshop"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Join us for a 3-hour live hands-on workshop building microservices from scratch.",
+                        "description": "Detailed description of the workshop"
+                    },
+                    "shortDescription": {
+                        "type": "string",
+                        "example": "Build production-ready microservices with NestJS and Redis.",
+                        "description": "Short summary of the workshop"
+                    },
+                    "thumbnail": {
+                        "type": "string",
+                        "example": "https://cdn.example.com/thumbnails/workshop-microservices.jpg",
+                        "description": "Thumbnail cover URL"
+                    },
+                    "startTime": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-10-15T14:00:00.000Z",
+                        "description": "Scheduled start time (ISO 8601 string)"
+                    },
+                    "endTime": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-10-15T17:00:00.000Z",
+                        "description": "Scheduled end time (ISO 8601 string)"
+                    },
+                    "meetingUrl": {
+                        "type": "string",
+                        "example": "https://meet.google.com/abc-defg-hij",
+                        "description": "Virtual meeting URL (Zoom, Google Meet, Teams)"
+                    },
+                    "recordingUrl": {
+                        "type": "string",
+                        "example": "https://cdn.example.com/recordings/workshop-1.mp4",
+                        "description": "Link to recording after workshop has completed"
+                    },
+                    "price": {
+                        "type": "number",
+                        "example": 49.99,
+                        "default": 0,
+                        "description": "Price in dollars (0.0 if free)"
+                    },
+                    "isFree": {
+                        "type": "boolean",
+                        "example": false,
+                        "default": true,
+                        "description": "Whether the workshop is free to join"
+                    },
+                    "maxAttendees": {
+                        "type": "number",
+                        "example": 100,
+                        "description": "Maximum number of attendees"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "SCHEDULED",
+                            "LIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                        ],
+                        "default": "SCHEDULED",
+                        "description": "Status of the workshop (SCHEDULED, LIVE, COMPLETED, CANCELLED)"
+                    }
+                },
+                "required": [
+                    "title"
+                ]
+            },
+            "UpdateWorkshopDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Updated Workshop Title",
+                        "description": "Title of the workshop"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Updated detailed description",
+                        "description": "Detailed description of the workshop"
+                    },
+                    "shortDescription": {
+                        "type": "string",
+                        "example": "Updated short summary",
+                        "description": "Short summary of the workshop"
+                    },
+                    "thumbnail": {
+                        "type": "string",
+                        "example": "https://cdn.example.com/thumbnails/updated-workshop.jpg",
+                        "description": "Cover thumbnail URL"
+                    },
+                    "productStatus": {
+                        "type": "string",
+                        "enum": [
+                            "DRAFT",
+                            "IN_REVIEW",
+                            "APPROVED",
+                            "CHANGES_REQUESTED",
+                            "ON_AIR",
+                            "OFF_AIR",
+                            "ARCHIVED"
+                        ],
+                        "description": "Lifecycle status of the product (DRAFT, IN_REVIEW, APPROVED, ON_AIR, OFF_AIR, ARCHIVED)"
+                    },
+                    "startTime": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-10-15T15:00:00.000Z",
+                        "description": "Scheduled start time"
+                    },
+                    "endTime": {
+                        "format": "date-time",
+                        "type": "string",
+                        "example": "2026-10-15T18:00:00.000Z",
+                        "description": "Scheduled end time"
+                    },
+                    "meetingUrl": {
+                        "type": "string",
+                        "example": "https://meet.google.com/xyz-uvwx-rst",
+                        "description": "Virtual meeting URL"
+                    },
+                    "recordingUrl": {
+                        "type": "string",
+                        "example": "https://cdn.example.com/recordings/workshop-rec.mp4",
+                        "description": "Recording URL"
+                    },
+                    "price": {
+                        "type": "number",
+                        "example": 79.99,
+                        "description": "Price in dollars"
+                    },
+                    "isFree": {
+                        "type": "boolean",
+                        "example": false,
+                        "description": "Whether the workshop is free to join"
+                    },
+                    "maxAttendees": {
+                        "type": "number",
+                        "example": 150,
+                        "description": "Maximum number of attendees"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "SCHEDULED",
+                            "LIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                        ],
+                        "description": "Live workshop status (SCHEDULED, LIVE, COMPLETED, CANCELLED)"
+                    }
+                }
+            },
+            "UpdateWorkshopStatusDto": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "SCHEDULED",
+                            "LIVE",
+                            "COMPLETED",
+                            "CANCELLED"
+                        ],
+                        "example": "LIVE",
+                        "description": "Updated workshop status (SCHEDULED, LIVE, COMPLETED, CANCELLED)"
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            },
+            "CreateCategoryDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "UpdateCategoryDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                }
+            },
+            "SubmitForReviewDto": {
+                "type": "object",
+                "properties": {
+                    "note": {
+                        "type": "string",
+                        "description": "Optional note from the author when submitting",
+                        "example": "All sections and videos are complete. Ready for review."
+                    }
+                }
+            },
+            "ReviewDecisionDto": {
+                "type": "object",
+                "properties": {
+                    "comment": {
+                        "type": "string",
+                        "description": "Reviewer comment — required when requesting changes, optional when approving",
+                        "example": "Great course! Please fix the typo in Section 2 session title."
+                    }
+                }
+            },
+            "EnrollDto": {
+                "type": "object",
+                "properties": {
+                    "productId": {
+                        "type": "string",
+                        "description": "Product (course/bundle) ID to enroll in",
+                        "example": "uuid"
+                    },
+                    "expiresAt": {
+                        "type": "string",
+                        "description": "Optional expiry date for the enrollment"
+                    }
+                },
+                "required": [
+                    "productId"
+                ]
+            },
+            "UpdateProgressDto": {
+                "type": "object",
+                "properties": {
+                    "sessionId": {
+                        "type": "string",
+                        "description": "Session ID to record progress for"
+                    },
+                    "watchTime": {
+                        "type": "number",
+                        "description": "Seconds watched so far",
+                        "default": 0
+                    },
+                    "completed": {
+                        "type": "boolean",
+                        "description": "Mark session as completed"
+                    }
+                },
+                "required": [
+                    "sessionId"
+                ]
+            }
+        }
+    }
+}

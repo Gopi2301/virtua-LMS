@@ -16,8 +16,9 @@ function mockProduct(status: ProductStatus, authorId = AUTHOR_ID) {
     return {
         id: PRODUCT_ID,
         type: 'COURSE',
+        description: 'A complete course description',
         status,
-        course: { authorId },
+        course: { authorId, sections: [{ sessions: [{ status: 'TEXT', questionnaire: null, video: null }] }] },
     };
 }
 

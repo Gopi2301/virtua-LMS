@@ -5,6 +5,7 @@ import { generateSlug } from '@virtua-lms/utils';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { CourseQueryDto } from './dto/query-course.dto';
 import { Prisma } from '@prisma/client';
+import type { AuthenticatedUser } from '@virtua-lms/types';
 
 @Injectable()
 export class CoursesService {
@@ -47,6 +48,7 @@ export class CoursesService {
         updateCourseDto: UpdateCourseDto,
         courseId: string,
         userId: string,
+        roles?: string[],
     ) {
         const existing = await this.prisma.product.findUnique({
             where: {
@@ -61,7 +63,8 @@ export class CoursesService {
             throw new NotFoundException('Course not found');
         }
 
-        if (existing.course.authorId !== userId) {
+        const isManager = roles?.some(r => ['MANAGER', 'SUPER_ADMIN'].includes(r));
+        if (!isManager && existing.course.authorId !== userId) {
             throw new ForbiddenException(
                 'You can only update your own courses',
             );
@@ -175,7 +178,7 @@ export class CoursesService {
 
         return update;
     }
-    async delete(id: string, userId: string) {
+    async delete(id: string, userId: string, roles?: string[]) {
         const existing = await this.prisma.product.findUnique({
             where: { id },
             include: {
@@ -186,7 +189,8 @@ export class CoursesService {
             throw new NotFoundException("Course not found")
         }
 
-        if (existing.course?.authorId !== userId) {
+        const isManager = roles?.some(r => ['MANAGER', 'SUPER_ADMIN'].includes(r));
+        if (!isManager && existing.course?.authorId !== userId) {
             throw new ForbiddenException("You can only delete your own courses")
         }
 
@@ -215,7 +219,12 @@ export class CoursesService {
                         },
                         category: true,
                         sections: {
-                            orderBy: { position: 'asc' }
+                            orderBy: { position: 'asc' },
+                            include: { sessions: { orderBy: { position: 'asc' }, include: {
+                                video: true,
+                                resources: { orderBy: { position: 'asc' } },
+                                questionnaire: { include: { questions: { orderBy: { position: 'asc' }, include: { options: { orderBy: { position: 'asc' } } } } } },
+                            } } }
                         }
                     }
                 }
@@ -226,11 +235,26 @@ export class CoursesService {
         }
         return existing
     }
-    async query(queryCourseDto: CourseQueryDto) {
+    async findPublicOne(id: string) {
+        const product = await this.prisma.product.findFirst({
+            where: { id, type: 'COURSE', status: 'ON_AIR' },
+            include: { course: { include: { category: true, sections: { orderBy: { position: 'asc' }, select: { id: true, title: true, description: true, position: true } } } } },
+        });
+        if (!product) throw new NotFoundException('Course not found');
+        return product;
+    }
+
+    async query(queryCourseDto: CourseQueryDto, actor?: AuthenticatedUser) {
         const { search, page, limit } = queryCourseDto;
         const where: any = {
             type: 'COURSE'
         };
+        if (!actor) where.status = 'ON_AIR';
+        else {
+            if (!actor.roles.some(role => ['SUPER_ADMIN', 'MANAGER'].includes(role))) where.course = { authorId: actor.id };
+            if (queryCourseDto.status) where.status = queryCourseDto.status;
+        }
+        if (queryCourseDto.categoryId) where.course = { ...where.course, categoryId: queryCourseDto.categoryId };
         if (search) {
             where.OR = [{
                 title: {
@@ -248,6 +272,7 @@ export class CoursesService {
         const [courses, total] = await Promise.all([
             this.prisma.product.findMany({
                 where,
+                include: { course: { include: { author: { select: { id: true, firstName: true, lastName: true, email: true } }, category: true, _count: { select: { sections: true } } } } },
                 orderBy: {
                     createdAt: 'desc'
                 },
