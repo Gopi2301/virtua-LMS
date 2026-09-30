@@ -1,4 +1,4 @@
-﻿import {
+import {
     BadRequestException,
     ConflictException,
     ForbiddenException,
@@ -32,7 +32,8 @@ export class EnrollmentsService {
             throw new BadRequestException('You can only enroll in published products');
         }
 
-        if (![ProductType.COURSE, ProductType.BUNDLE].includes(product.type)) {
+        const allowedTypes: ProductType[] = [ProductType.COURSE, ProductType.BUNDLE];
+        if (!allowedTypes.includes(product.type)) {
             throw new BadRequestException('Only courses and bundles support enrollment');
         }
 
