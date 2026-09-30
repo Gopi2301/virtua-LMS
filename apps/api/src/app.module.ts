@@ -15,6 +15,9 @@ import { WorkshopsModule } from './workshops/workshops.module';
 import { CategoriesModule } from "./categories/categories.module";
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { CoursePublishingModule } from './course-publishing/course-publishing.module';
+import { EnrollmentsModule } from './enrollments/enrollments.module';
+import { ProgressModule } from './progress/progress.module';
+import { CertificatesModule } from './certificates/certificates.module';
 
 @Module({
     imports: [
@@ -33,6 +36,10 @@ import { CoursePublishingModule } from './course-publishing/course-publishing.mo
       CategoriesModule,
       AuditLogModule,
       CoursePublishingModule,
+      // ─── Phase 4 ───────────────────────────────────────
+      EnrollmentsModule,
+      ProgressModule,
+      CertificatesModule,
     ],
     controllers: [AppController],
     providers: [],
