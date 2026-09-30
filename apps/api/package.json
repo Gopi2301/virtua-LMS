@@ -29,12 +29,16 @@
     "devDependencies": {
         "@nestjs/cli": "^12.0.7",
         "@nestjs/schematics": "^12.0.5",
+        "@nestjs/testing": "^12.1.1",
         "@types/express": "^5.0.6",
+        "@types/jest": "^30.0.0",
         "@types/multer": "^2.2.0",
         "@types/node": "^26.6.3",
         "@types/passport-jwt": "^4.0.1",
+        "jest": "^30.5.2",
         "prisma": "6.4.1",
         "rimraf": "^6.1.3",
+        "ts-jest": "^29.4.14",
         "ts-node": "^10.9.2",
         "typescript": "~5.7.3"
     },
@@ -44,6 +48,29 @@
         "start:dev": "nest start --watch",
         "start:prod": "node dist/main",
         "lint": "eslint . --ext .ts",
-        "format": "prettier --write \"src/**/*.ts\""
+        "format": "prettier --write \"src/**/*.ts\"",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:cov": "jest --coverage"
+    },
+    "jest": {
+        "moduleFileExtensions": [
+            "js",
+            "json",
+            "ts"
+        ],
+        "rootDir": "src",
+        "testRegex": ".*\\.spec\\.ts$",
+        "transform": {
+            "^.+\\.(t|j)s$": "ts-jest"
+        },
+        "collectCoverageFrom": [
+            "**/*.(t|j)s"
+        ],
+        "coverageDirectory": "../coverage",
+        "testEnvironment": "node",
+        "transformIgnorePatterns": [
+            "node_modules/(?!(@nestjs)/)"
+        ]
     }
 }

@@ -6,10 +6,30 @@ import { UsersModule } from "./users/users.module";
 import { AuthorApplicationsModule } from "./authors/author-applications.module";
 import { CoursesModule } from './courses/courses.module';
 import { SectionsModule } from './sections/sections.module';
+import { SessionsModule } from './sessions/sessions.module';
+import { VideosModule } from './videos/videos.module';
+import { ResourcesModule } from './resources/resources.module';
+import { QuestionnairesModule } from './questionnaires/questionnaires.module';
+import { BundlesModule } from './bundles/bundles.module';
+import { WorkshopsModule } from './workshops/workshops.module';
 import { CategoriesModule } from "./categories/categories.module";
 
 @Module({
-    imports: [PrismaModule, AuthModule, UsersModule, AuthorApplicationsModule, CoursesModule, SectionsModule, CategoriesModule],
+    imports: [
+      PrismaModule,
+      AuthModule,
+      UsersModule,
+      AuthorApplicationsModule,
+      CoursesModule,
+      SectionsModule,
+      SessionsModule,
+      VideosModule,
+      ResourcesModule,
+      QuestionnairesModule,
+      BundlesModule,
+      WorkshopsModule,
+      CategoriesModule,
+    ],
     controllers: [AppController],
     providers: [],
 })
