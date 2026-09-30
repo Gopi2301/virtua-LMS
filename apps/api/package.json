@@ -35,6 +35,7 @@
         "@types/multer": "^2.2.0",
         "@types/node": "^26.6.3",
         "@types/passport-jwt": "^4.0.1",
+        "cross-env": "^10.1.0",
         "jest": "^30.5.2",
         "prisma": "6.4.1",
         "rimraf": "^6.1.3",
@@ -49,9 +50,9 @@
         "start:prod": "node dist/main",
         "lint": "eslint . --ext .ts",
         "format": "prettier --write \"src/**/*.ts\"",
-        "test": "jest",
-        "test:watch": "jest --watch",
-        "test:cov": "jest --coverage"
+        "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+        "test:watch": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch",
+        "test:cov": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage"
     },
     "jest": {
         "moduleFileExtensions": [
@@ -61,16 +62,28 @@
         ],
         "rootDir": "src",
         "testRegex": ".*\\.spec\\.ts$",
+        "extensionsToTreatAsEsm": [
+            ".ts"
+        ],
         "transform": {
-            "^.+\\.(t|j)s$": "ts-jest"
+            "^.+\\.(t|j)s$": [
+                "ts-jest",
+                {
+                    "useESM": true,
+                    "tsconfig": {
+                        "module": "ESNext",
+                        "moduleResolution": "Bundler"
+                    }
+                }
+            ]
+        },
+        "moduleNameMapper": {
+            "^src/(.*)$": "<rootDir>/$1"
         },
         "collectCoverageFrom": [
             "**/*.(t|j)s"
         ],
         "coverageDirectory": "../coverage",
-        "testEnvironment": "node",
-        "transformIgnorePatterns": [
-            "node_modules/(?!(@nestjs)/)"
-        ]
+        "testEnvironment": "node"
     }
 }

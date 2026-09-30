@@ -37,6 +37,9 @@ model User {
   Course             Course[]
   Bundle             Bundle[]
   Workshop           Workshop[]
+  submittedCourses   CourseSubmission[] @relation("SubmissionSubmittedBy")
+  reviewedCourses    CourseSubmission[] @relation("SubmissionReviewedBy")
+  auditLogs          AuditLog[]         @relation("AuditLogActor")
 
   @@index([email])
   @@index([isActive])
@@ -46,6 +49,31 @@ enum ApplicationStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+}
+
+enum AuditAction {
+  COURSE_CREATED
+  COURSE_SUBMITTED
+  COURSE_APPROVED
+  COURSE_CHANGES_REQUESTED
+  COURSE_PUBLISHED
+  COURSE_UNPUBLISHED
+  COURSE_ARCHIVED
+  USER_CREATED
+  USER_ROLE_CHANGED
+  USER_SUSPENDED
+  USER_ACTIVATED
+  ENROLLMENT_CREATED
+  ENROLLMENT_REVOKED
+  CERTIFICATE_ISSUED
+  PAYMENT_UPDATED
+  TICKET_UPDATED
 }
 
 model AuthorApplication {
@@ -125,23 +153,24 @@ enum WorkshopStatus {
 }
 
 model Product {
-  id               String        @id @default(uuid())
+  id               String             @id @default(uuid())
   title            String
-  slug             String        @unique
-  description      String?       @db.Text
-  shortDescription String?       @db.Text
+  slug             String             @unique
+  description      String?            @db.Text
+  shortDescription String?            @db.Text
   thumbnail        String?
   type             ProductType
-  status           ProductStatus @default(DRAFT)
+  status           ProductStatus      @default(DRAFT)
   createdById      String
-  createdBy        User          @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy        User               @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
   updatedById      String?
-  updatedBy        User?         @relation("ProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
+  updatedBy        User?              @relation("ProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
   course           Course?
   bundle           Bundle?
   workshop         Workshop?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  submissions      CourseSubmission[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   @@index([type])
   @@index([status])
@@ -359,4 +388,42 @@ model QuestionOption {
 
   @@unique([questionId, position])
   @@index([questionId])
+}
+
+// ─── Phase 3: Course Approval & Publishing ───────────────────────────────────
+
+model CourseSubmission {
+  id             String           @id @default(uuid())
+  productId      String
+  product        Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  submittedById  String
+  submittedBy    User             @relation("SubmissionSubmittedBy", fields: [submittedById], references: [id], onDelete: Cascade)
+  reviewedById   String?
+  reviewedBy     User?            @relation("SubmissionReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  status         SubmissionStatus @default(PENDING)
+  reviewComment  String?          @db.Text
+  submittedAt    DateTime         @default(now())
+  reviewedAt     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([productId])
+  @@index([submittedById])
+  @@index([status])
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  actorId    String
+  actor      User        @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: Cascade)
+  action     AuditAction
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
 }

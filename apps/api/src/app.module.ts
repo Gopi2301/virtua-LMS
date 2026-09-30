@@ -13,6 +13,8 @@ import { QuestionnairesModule } from './questionnaires/questionnaires.module';
 import { BundlesModule } from './bundles/bundles.module';
 import { WorkshopsModule } from './workshops/workshops.module';
 import { CategoriesModule } from "./categories/categories.module";
+import { AuditLogModule } from './audit-log/audit-log.module';
+import { CoursePublishingModule } from './course-publishing/course-publishing.module';
 
 @Module({
     imports: [
@@ -29,6 +31,8 @@ import { CategoriesModule } from "./categories/categories.module";
       BundlesModule,
       WorkshopsModule,
       CategoriesModule,
+      AuditLogModule,
+      CoursePublishingModule,
     ],
     controllers: [AppController],
     providers: [],
