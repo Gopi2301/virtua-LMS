@@ -9,6 +9,8 @@ import {
   Video,
   X,
   ExternalLink,
+  Award,
+  toast,
 } from "@virtua-lms/ui";
 import React, {
   useState,
@@ -22,6 +24,7 @@ import type {
   LearningProgressResponse,
   PlayerSessionData,
   PlayerCurriculumSession,
+  QuestionnaireAttemptResult,
 } from "../services/learning.service";
 import { formatDuration } from "../utils/formatters";
 import { CertificateModal } from "./CertificateModal";
@@ -57,11 +60,15 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
 
   // Quiz state
   const [quizAnswers, setQuizAnswers] = useState<Record<string, string[]>>({});
+  const [activeAttemptId, setActiveAttemptId] = useState<string | null>(null);
+  const [quizResult, setQuizResult] = useState<QuestionnaireAttemptResult | null>(null);
+  const [submittingQuiz, setSubmittingQuiz] = useState<boolean>(false);
   const [quizSubmitted, setQuizSubmitted] = useState<boolean>(false);
   const [quizScore, setQuizScore] = useState<{
     correct: number;
     total: number;
   } | null>(null);
+  const [quizError, setQuizError] = useState<string | null>(null);
 
   // Certificate celebration modal
   const [showCertModal, setShowCertModal] = useState<boolean>(false);
@@ -112,6 +119,8 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
       setQuizAnswers({});
       setQuizSubmitted(false);
       setQuizScore(null);
+      setQuizResult(null);
+      setActiveAttemptId(null);
       try {
         const sess = await learningService.getEnrollmentSession(
           enrollmentId,
@@ -119,6 +128,18 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
         );
         if (isMounted) {
           setSessionData(sess);
+          if (sess.questionnaire?.latestAttempt) {
+            const attempt = sess.questionnaire.latestAttempt;
+            if (attempt.status === "SUBMITTED") {
+              setQuizScore({
+                correct: attempt.score ?? 0,
+                total: attempt.totalScore ?? sess.questionnaire.questions.length,
+              });
+              setQuizSubmitted(true);
+            } else if (attempt.status === "IN_PROGRESS") {
+              setActiveAttemptId(attempt.id);
+            }
+          }
           if (sess.questionnaire && sess.questionnaire.questions.length > 0) {
             setActiveTab("overview");
           }
@@ -204,26 +225,77 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
   // Submit quiz answers
   const handleSubmitQuiz = async () => {
     if (!sessionData?.questionnaire) return;
+    const qId = sessionData.questionnaire.id;
     const questions = sessionData.questionnaire.questions;
-    let correctCount = 0;
 
-    questions.forEach((q) => {
-      const userSelected = quizAnswers[q.id] || [];
-      const correctOptionIds = q.options
-        .filter((o) => o.isCorrect)
-        .map((o) => o.id);
-      const isCorrect =
-        userSelected.length === correctOptionIds.length &&
-        userSelected.every((id) => correctOptionIds.includes(id));
-      if (isCorrect) correctCount++;
-    });
+    const answeredCount = Object.keys(quizAnswers).filter(
+      (k) => (quizAnswers[k] || []).length > 0
+    ).length;
+    if (answeredCount === 0 && questions.length > 0) {
+      setQuizError("Please answer the questions before submitting.");
+      toast.error("Please answer the questions before submitting.");
+      return;
+    }
 
-    setQuizScore({ correct: correctCount, total: questions.length });
-    setQuizSubmitted(true);
+    setQuizError(null);
+    setSubmittingQuiz(true);
+    try {
+      let attemptId = activeAttemptId;
+      if (!attemptId) {
+        const started = await learningService.startQuizAttempt(qId, enrollmentId);
+        attemptId = started.attemptId;
+        setActiveAttemptId(attemptId);
+      }
 
-    // If passed (>70%), mark session complete!
-    if (correctCount / questions.length >= 0.7) {
-      await handleMarkComplete(false);
+      const answersPayload = questions.map((q) => ({
+        questionId: q.id,
+        selectedOptionIds: quizAnswers[q.id] || [],
+      }));
+
+      const res = await learningService.submitQuizAttempt(qId, attemptId, answersPayload);
+      setQuizResult(res);
+      setQuizScore({ correct: res.score, total: res.totalScore });
+      setQuizSubmitted(true);
+
+      if (res.isPassed) {
+        toast.success(`🎉 Passed! You scored ${res.scorePercentage}%!`);
+        await loadProgress();
+        if (res.certificate) {
+          setClaimedCert(res.certificate as any);
+          setShowCertModal(true);
+        }
+      } else {
+        toast.error(`Score: ${res.scorePercentage}%. Passing score is ${res.passingScore}%. Try again!`);
+      }
+    } catch (err: any) {
+      console.error("Quiz submission error:", err);
+      const msg = err?.data?.message || err?.response?.data?.message || err?.message || "Failed to submit quiz";
+      setQuizError(msg);
+      toast.error(msg);
+    } finally {
+      setSubmittingQuiz(false);
+    }
+  };
+
+  const handleRetakeQuiz = async () => {
+    if (!sessionData?.questionnaire) return;
+    setSubmittingQuiz(true);
+    setQuizError(null);
+    try {
+      const started = await learningService.startQuizAttempt(sessionData.questionnaire.id, enrollmentId);
+      setActiveAttemptId(started.attemptId);
+      setQuizAnswers({});
+      setQuizSubmitted(false);
+      setQuizScore(null);
+      setQuizResult(null);
+      toast.info("Started a new quiz attempt. Good luck!");
+    } catch (err: any) {
+      console.error("Retake quiz error:", err);
+      const msg = err?.data?.message || err?.response?.data?.message || err?.message || "Cannot start new attempt";
+      setQuizError(msg);
+      toast.error(msg);
+    } finally {
+      setSubmittingQuiz(false);
     }
   };
 
@@ -541,23 +613,56 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                   {/* TAB: QUIZ */}
                   {activeTab === "quiz" && sessionData.questionnaire && (
                     <div className="space-y-6">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-zinc-900 border border-zinc-800">
                         <div>
-                          <h3 className="text-base font-bold text-white">
-                            {sessionData.questionnaire.title}
-                          </h3>
-                          <p className="text-sm text-zinc-400">
-                            Answer the questions below to test your
-                            understanding.
+                          <div className="flex items-center gap-2">
+                            <Award className="text-[var(--color-primary)]" size={20} />
+                            <h3 className="text-base font-bold text-white">
+                              {sessionData.questionnaire.title}
+                            </h3>
+                          </div>
+                          <p className="text-xs text-zinc-400 mt-1">
+                            {sessionData.questionnaire.description ||
+                              "Answer all questions below to test your understanding."}
                           </p>
+                          {sessionData.questionnaire.passingScore ? (
+                            <p className="text-xs font-mono text-[var(--color-primary)] mt-1">
+                              Passing score required: {sessionData.questionnaire.passingScore}%
+                            </p>
+                          ) : null}
                         </div>
-                        {quizScore && (
-                          <div className="px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-bold">
-                            Score: {quizScore.correct} / {quizScore.total} (
-                            {Math.round(
-                              (quizScore.correct / quizScore.total) * 100,
-                            )}
-                            %)
+
+                        {quizSubmitted && quizScore && (
+                          <div className="flex items-center gap-3 shrink-0">
+                            <div
+                              className={`px-3 py-1.5 rounded-lg border text-sm font-bold flex items-center gap-2 ${
+                                (quizResult?.isPassed ?? (quizScore.correct / quizScore.total >= 0.7))
+                                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                                  : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                              }`}
+                            >
+                              <span>
+                                Score: {quizScore.correct} / {quizScore.total} (
+                                {Math.round((quizScore.correct / quizScore.total) * 100)}%)
+                              </span>
+                              {(quizResult?.isPassed ?? (quizScore.correct / quizScore.total >= 0.7)) ? (
+                                <span className="text-xs bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-300">
+                                  PASSED
+                                </span>
+                              ) : (
+                                <span className="text-xs bg-rose-500/20 px-2 py-0.5 rounded text-rose-300">
+                                  RETRY
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleRetakeQuiz}
+                              disabled={submittingQuiz}
+                              className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold rounded-lg transition cursor-pointer"
+                            >
+                              Retake Quiz
+                            </button>
                           </div>
                         )}
                       </div>
@@ -566,33 +671,52 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                         {sessionData.questionnaire.questions.map((q, qIdx) => {
                           const isMulti = q.type === "MULTIPLE_SELECT";
                           const selected = quizAnswers[q.id] || [];
+                          const reviewItem = quizResult?.review?.find((r) => r.questionId === q.id);
+
                           return (
                             <div
                               key={q.id}
-                              className="p-4 rounded-md bg-zinc-900 border border-zinc-800 space-y-3"
+                              className="p-5 rounded-xl bg-zinc-900 border border-zinc-800 space-y-4"
                             >
-                              <p className="text-sm font-bold text-white">
-                                {qIdx + 1}. {q.text}{" "}
-                                {isMulti && (
-                                  <span className="text-[var(--color-text-secondary)] font-normal">
-                                    (Select all that apply)
+                              <div className="flex items-start justify-between gap-4">
+                                <p className="text-sm font-bold text-white">
+                                  {qIdx + 1}. {q.text}{" "}
+                                  {isMulti && (
+                                    <span className="text-zinc-400 font-normal text-xs">
+                                      (Multiple choices allowed)
+                                    </span>
+                                  )}
+                                </p>
+                                {quizSubmitted && reviewItem && (
+                                  <span
+                                    className={`text-xs px-2 py-0.5 rounded font-bold shrink-0 ${
+                                      reviewItem.isCorrect
+                                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                        : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                                    }`}
+                                  >
+                                    {reviewItem.isCorrect ? "Correct (+1)" : "Incorrect (0)"}
                                   </span>
                                 )}
-                              </p>
+                              </div>
 
                               <div className="space-y-2">
                                 {q.options.map((opt) => {
                                   const isSelected = selected.includes(opt.id);
+                                  const isCorrectAnswer = reviewItem?.correctOptionIds?.includes(opt.id);
+
                                   let optionStyle =
                                     "border-zinc-800 bg-zinc-950 text-zinc-300 hover:border-zinc-700";
 
                                   if (quizSubmitted) {
-                                    if (opt.isCorrect) {
+                                    if (isCorrectAnswer) {
                                       optionStyle =
-                                        "border-emerald-500 bg-emerald-500/10 text-emerald-300 font-bold";
-                                    } else if (isSelected && !opt.isCorrect) {
+                                        "border-emerald-500/60 bg-emerald-500/10 text-emerald-300 font-semibold";
+                                    } else if (isSelected && !isCorrectAnswer) {
                                       optionStyle =
-                                        "border-rose-500 bg-rose-500/10 text-rose-300 line-through";
+                                        "border-rose-500/60 bg-rose-500/10 text-rose-300 line-through";
+                                    } else {
+                                      optionStyle = "border-zinc-800/60 bg-zinc-950/60 text-zinc-500";
                                     }
                                   } else if (isSelected) {
                                     optionStyle =
@@ -612,45 +736,82 @@ export const CoursePlayerView: React.FC<CoursePlayerViewProps> = ({
                                           isMulti,
                                         )
                                       }
-                                      className={`w-full text-left p-3 rounded-md border text-sm cursor-pointer transition flex items-center justify-between ${optionStyle}`}
+                                      className={`w-full text-left p-3.5 rounded-lg border text-sm cursor-pointer transition flex items-center justify-between ${optionStyle}`}
                                     >
                                       <span>{opt.text}</span>
-                                      {quizSubmitted && opt.isCorrect && (
-                                        <span className="text-emerald-400 font-bold">
-                                          <Check
-                                            size={16}
-                                            className="inline"
-                                            aria-hidden="true"
-                                          />{" "}
-                                          Correct
+                                      {quizSubmitted && isCorrectAnswer && (
+                                        <span className="text-emerald-400 font-bold text-xs flex items-center gap-1">
+                                          <Check size={14} /> Correct Answer
+                                        </span>
+                                      )}
+                                      {quizSubmitted && isSelected && !isCorrectAnswer && (
+                                        <span className="text-rose-400 text-xs">
+                                          Your Choice
                                         </span>
                                       )}
                                     </button>
                                   );
                                 })}
                               </div>
+
+                              {/* Question explanation after submission */}
+                              {quizSubmitted && reviewItem?.explanation && (
+                                <div className="mt-3 p-3.5 rounded-lg bg-zinc-950 border border-zinc-800/80 text-xs text-zinc-300">
+                                  <span className="font-bold text-[var(--color-primary)]">
+                                    💡 Explanation:{" "}
+                                  </span>
+                                  {reviewItem.explanation}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
 
                         {!quizSubmitted ? (
-                          <button
-                            onClick={handleSubmitQuiz}
-                            className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[#e0d500] text-black font-semibold text-sm rounded-md  transition"
-                          >
-                            Submit Answers
-                          </button>
+                          <div className="space-y-3 pt-2">
+                            {quizError && (
+                              <div className="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
+                                <span>{quizError}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setQuizError(null)}
+                                  className="text-rose-400 hover:text-white ml-2 text-xs font-bold cursor-pointer"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={handleSubmitQuiz}
+                                disabled={submittingQuiz}
+                                className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[#e0d500] text-black font-semibold text-sm rounded-lg shadow-md cursor-pointer transition disabled:opacity-50"
+                              >
+                                {submittingQuiz ? "Scoring Quiz…" : "Submit Answers"}
+                              </button>
+                            </div>
+                          </div>
                         ) : (
-                          <button
-                            onClick={() => {
-                              setQuizSubmitted(false);
-                              setQuizAnswers({});
-                              setQuizScore(null);
-                            }}
-                            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold rounded-md transition"
-                          >
-                            Retake Quiz
-                          </button>
+                          <div className="flex items-center gap-3 pt-2">
+                            <button
+                              type="button"
+                              onClick={handleRetakeQuiz}
+                              disabled={submittingQuiz}
+                              className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold rounded-lg transition cursor-pointer"
+                            >
+                              Retake Quiz
+                            </button>
+                            {nextSession && (
+                              <button
+                                type="button"
+                                onClick={() => setCurrentSessionId(nextSession.id)}
+                                className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[#e0d500] text-black text-sm font-semibold rounded-lg transition cursor-pointer"
+                              >
+                                Next Lesson →
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>

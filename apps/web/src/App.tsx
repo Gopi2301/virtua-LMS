@@ -11,6 +11,7 @@ import {
   CardContent,
   Badge,
   Input,
+  Toaster,
 } from "@virtua-lms/ui";
 import { usersService, type LMSUser } from "./services/users.service";
 import { authorApplicationService } from "./services/authorApplication.service";
@@ -199,16 +200,20 @@ export const App: React.FC = () => {
   // Full-screen Course Player View
   if (activeTab === "player" && activeEnrollmentId) {
     return (
-      <CoursePlayerView
-        enrollmentId={activeEnrollmentId}
-        studentName={displayName}
-        onExit={() => setActiveTab("learning")}
-      />
+      <>
+        <Toaster richColors position="top-right" theme="dark" />
+        <CoursePlayerView
+          enrollmentId={activeEnrollmentId}
+          studentName={displayName}
+          onExit={() => setActiveTab("learning")}
+        />
+      </>
     );
   }
 
   return (
     <div className="learner-app">
+      <Toaster richColors position="top-right" theme="dark" />
       <a className="learning-skip" href="#learning-main">
         Skip to content
       </a>

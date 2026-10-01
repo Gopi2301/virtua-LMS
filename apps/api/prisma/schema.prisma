@@ -44,6 +44,7 @@ model User {
   revokedEnrollments Enrollment[]       @relation("RevokedEnrollments")
   certificates       Certificate[]      @relation("UserCertificates")
   orders             Order[]            @relation("UserOrders")
+  questionnaireAttempts QuestionnaireAttempt[] @relation("UserQuestionnaireAttempts")
 
   @@index([email])
   @@index([isActive])
@@ -78,6 +79,7 @@ enum AuditAction {
   CERTIFICATE_ISSUED
   PAYMENT_UPDATED
   TICKET_UPDATED
+  QUESTIONNAIRE_ATTEMPT_SUBMITTED
 }
 
 model AuthorApplication {
@@ -364,6 +366,7 @@ model Questionnaire {
   passingScore Int        @default(0)
   maxAttempts  Int        @default(0)
   questions    Question[]
+  attempts     QuestionnaireAttempt[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -379,6 +382,7 @@ model Question {
   explanation     String?          @db.Text
   position        Int              @default(0)
   options         QuestionOption[]
+  answers         QuestionnaireAnswer[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
@@ -397,6 +401,51 @@ model QuestionOption {
   updatedAt  DateTime @updatedAt
 
   @@unique([questionId, position])
+  @@index([questionId])
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
+model QuestionnaireAttempt {
+  id              String               @id @default(uuid())
+  questionnaireId String
+  questionnaire   Questionnaire        @relation(fields: [questionnaireId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User                 @relation("UserQuestionnaireAttempts", fields: [userId], references: [id], onDelete: Cascade)
+  enrollmentId    String?
+  enrollment      Enrollment?          @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  status          AttemptStatus        @default(IN_PROGRESS)
+  score           Int?
+  totalScore      Int?
+  scorePercentage Decimal?             @db.Decimal(5, 2)
+  isPassed        Boolean?
+  answers         QuestionnaireAnswer[]
+  startedAt       DateTime             @default(now())
+  submittedAt     DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([questionnaireId])
+  @@index([userId])
+  @@index([enrollmentId])
+}
+
+model QuestionnaireAnswer {
+  id                String               @id @default(uuid())
+  attemptId         String
+  attempt           QuestionnaireAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId        String
+  question          Question             @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOptionIds String[]
+  isCorrect         Boolean?
+  pointsEarned      Int                  @default(0)
+  createdAt         DateTime             @default(now())
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
   @@index([questionId])
 }
 
@@ -463,6 +512,7 @@ model Enrollment {
 
   sessionProgress SessionProgress[]
   certificate     Certificate?
+  questionnaireAttempts QuestionnaireAttempt[]
 
   @@unique([userId, productId])
   @@index([userId])

@@ -6,11 +6,15 @@ import {
 } from '@nestjs/common';
 import { EnrollmentStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CertificatesService } from 'src/certificates/certificates.service';
 import { UpdateProgressDto } from './dto/update-progress.dto';
 
 @Injectable()
 export class ProgressService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly certificatesService: CertificatesService,
+    ) { }
 
     // ─── Upsert session progress ──────────────────────────────────────────────
     async updateProgress(userId: string, enrollmentId: string, dto: UpdateProgressDto) {
@@ -26,10 +30,27 @@ export class ProgressService {
                     },
                 },
             },
+            include: {
+                questionnaire: true,
+            },
         });
 
         if (!session) {
             throw new BadRequestException('Session does not belong to this enrollment');
+        }
+
+        // If session has a questionnaire with passingScore > 0, verify student passed
+        if (dto.completed && session.questionnaire && session.questionnaire.passingScore > 0) {
+            const passed = await this.prisma.questionnaireAttempt.findFirst({
+                where: {
+                    questionnaireId: session.questionnaire.id,
+                    userId,
+                    isPassed: true,
+                },
+            });
+            if (!passed) {
+                throw new BadRequestException('You must pass the quiz before completing this lesson');
+            }
         }
 
         const progress = await this.prisma.sessionProgress.upsert({
@@ -45,6 +66,15 @@ export class ProgressService {
                 completedAt: dto.completed ? new Date() : undefined,
             },
         });
+
+        // If completed, check if course is now 100% complete and auto-issue certificate
+        if (dto.completed) {
+            try {
+                await this.certificatesService.issue(enrollmentId, userId);
+            } catch (err) {
+                // Safely ignored if course not 100% or certificate already exists
+            }
+        }
 
         return progress;
     }
@@ -166,7 +196,7 @@ export class ProgressService {
                             include: {
                                 options: {
                                     orderBy: { position: 'asc' },
-                                    select: { id: true, text: true, position: true, isCorrect: true },
+                                    select: { id: true, text: true, position: true },
                                 },
                             },
                         },
@@ -186,8 +216,35 @@ export class ProgressService {
             where: { enrollmentId_sessionId: { enrollmentId, sessionId } },
         });
 
+        let questionnaireData: any = null;
+        if (session.questionnaire) {
+            const latestAttempt = await this.prisma.questionnaireAttempt.findFirst({
+                where: {
+                    questionnaireId: session.questionnaire.id,
+                    userId,
+                },
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    status: true,
+                    score: true,
+                    totalScore: true,
+                    scorePercentage: true,
+                    isPassed: true,
+                    startedAt: true,
+                    submittedAt: true,
+                },
+            });
+
+            questionnaireData = {
+                ...session.questionnaire,
+                latestAttempt,
+            };
+        }
+
         return {
             ...session,
+            questionnaire: questionnaireData,
             watchTime: progress?.watchTime ?? 0,
             completed: !!progress?.completedAt,
             completedAt: progress?.completedAt ?? null,

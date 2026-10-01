@@ -5,11 +5,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { AttemptStatus, AuditAction, EnrollmentStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { AuditLogService } from 'src/audit-log/audit-log.service';
+import { CertificatesService } from 'src/certificates/certificates.service';
 import {
   CreateOptionDto,
   CreateQuestionDto,
   CreateQuestionnaireDto,
+  StartAttemptDto,
+  SubmitAttemptDto,
   UpdateOptionDto,
   UpdateQuestionDto,
   UpdateQuestionnaireDto,
@@ -17,7 +22,11 @@ import {
 
 @Injectable()
 export class QuestionnairesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+    private readonly certificatesService: CertificatesService,
+  ) {}
 
   private validateOptions(options: CreateOptionDto[] | undefined, type: string) {
     if (!options) return;
@@ -656,4 +665,416 @@ export class QuestionnairesService {
 
     return { message: 'Option deleted successfully', id: optionId };
   }
+
+  // ─── Student Attempts & Scoring (Phase 6) ──────────────────────────────────
+
+  /**
+   * Start a new questionnaire attempt (or resume active one)
+   */
+  async startAttempt(questionnaireId: string, userId: string, dto?: StartAttemptDto) {
+    const questionnaire = await this.prisma.questionnaire.findUnique({
+      where: { id: questionnaireId },
+      include: {
+        questions: {
+          orderBy: { position: 'asc' },
+          include: {
+            options: {
+              orderBy: { position: 'asc' },
+              select: {
+                id: true,
+                text: true,
+                position: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!questionnaire) {
+      throw new NotFoundException('Questionnaire not found');
+    }
+
+    let validEnrollmentId: string | null = null;
+    if (dto?.enrollmentId) {
+      const enrollment = await this.prisma.enrollment.findUnique({
+        where: { id: dto.enrollmentId },
+      });
+      if (enrollment && enrollment.userId === userId) {
+        if (enrollment.status !== EnrollmentStatus.ACTIVE) {
+          throw new BadRequestException('Enrollment is not active');
+        }
+        validEnrollmentId = enrollment.id;
+      } else if (enrollment) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        const isPrivileged = user?.roles?.some((r) =>
+          ['AUTHOR', 'MANAGER', 'SUPER_ADMIN'].includes(r),
+        );
+        if (!isPrivileged) {
+          throw new ForbiddenException('Invalid enrollment');
+        }
+      }
+    }
+
+    if (questionnaire.maxAttempts > 0) {
+      const submittedAttempts = await this.prisma.questionnaireAttempt.count({
+        where: {
+          questionnaireId,
+          userId,
+          status: AttemptStatus.SUBMITTED,
+        },
+      });
+      if (submittedAttempts >= questionnaire.maxAttempts) {
+        throw new BadRequestException(
+          `Maximum attempt limit (${questionnaire.maxAttempts}) reached for this questionnaire`,
+        );
+      }
+    }
+
+    // Look for existing IN_PROGRESS attempt
+    let attempt = await this.prisma.questionnaireAttempt.findFirst({
+      where: {
+        questionnaireId,
+        userId,
+        status: AttemptStatus.IN_PROGRESS,
+      },
+      include: {
+        answers: true,
+      },
+    });
+
+    if (!attempt) {
+      attempt = await this.prisma.questionnaireAttempt.create({
+        data: {
+          questionnaireId,
+          userId,
+          enrollmentId: validEnrollmentId,
+          status: AttemptStatus.IN_PROGRESS,
+        },
+        include: {
+          answers: true,
+        },
+      });
+    }
+
+    return {
+      attemptId: attempt.id,
+      questionnaireId: questionnaire.id,
+      title: questionnaire.title,
+      description: questionnaire.description,
+      passingScore: questionnaire.passingScore,
+      maxAttempts: questionnaire.maxAttempts,
+      startedAt: attempt.startedAt,
+      savedAnswers: attempt.answers.map((a) => ({
+        questionId: a.questionId,
+        selectedOptionIds: a.selectedOptionIds,
+      })),
+      questions: questionnaire.questions.map((q) => ({
+        id: q.id,
+        text: q.text,
+        type: q.type,
+        position: q.position,
+        options: q.options.map((opt) => ({
+          id: opt.id,
+          text: opt.text,
+          position: opt.position,
+        })),
+      })),
+    };
+  }
+
+  /**
+   * Submit questionnaire attempt, calculate score, evaluate passing status, update progress & certificates
+   */
+  async submitAttempt(
+    questionnaireId: string,
+    attemptId: string,
+    userId: string,
+    dto: SubmitAttemptDto,
+  ) {
+    const attempt = await this.prisma.questionnaireAttempt.findUnique({
+      where: { id: attemptId },
+      include: {
+        questionnaire: {
+          include: {
+            session: {
+              include: {
+                section: {
+                  include: {
+                    course: true,
+                  },
+                },
+              },
+            },
+            questions: {
+              orderBy: { position: 'asc' },
+              include: {
+                options: {
+                  orderBy: { position: 'asc' },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!attempt) {
+      throw new NotFoundException('Attempt not found');
+    }
+
+    if (attempt.userId !== userId) {
+      throw new ForbiddenException('Attempt belongs to another student');
+    }
+
+    if (attempt.questionnaireId !== questionnaireId) {
+      throw new BadRequestException('Attempt does not match this questionnaire');
+    }
+
+    if (attempt.status === AttemptStatus.SUBMITTED) {
+      throw new BadRequestException('This attempt has already been submitted');
+    }
+
+    const questionnaire = attempt.questionnaire;
+    const questions = questionnaire.questions;
+    let correctCount = 0;
+    const answerRecords: {
+      attemptId: string;
+      questionId: string;
+      selectedOptionIds: string[];
+      isCorrect: boolean;
+      pointsEarned: number;
+    }[] = [];
+
+    const reviewQuestions: any[] = [];
+
+    for (const q of questions) {
+      const userAns = dto.answers.find((a) => a.questionId === q.id);
+      const selectedOptionIds = userAns ? userAns.selectedOptionIds : [];
+      const correctOptionIds = q.options.filter((o) => o.isCorrect).map((o) => o.id);
+
+      // Exact match check
+      const isCorrect =
+        selectedOptionIds.length === correctOptionIds.length &&
+        selectedOptionIds.every((id) => correctOptionIds.includes(id));
+
+      if (isCorrect) {
+        correctCount++;
+      }
+
+      answerRecords.push({
+        attemptId: attempt.id,
+        questionId: q.id,
+        selectedOptionIds,
+        isCorrect,
+        pointsEarned: isCorrect ? 1 : 0,
+      });
+
+      reviewQuestions.push({
+        questionId: q.id,
+        text: q.text,
+        type: q.type,
+        explanation: q.explanation,
+        isCorrect,
+        selectedOptionIds,
+        correctOptionIds,
+        options: q.options.map((opt) => ({
+          id: opt.id,
+          text: opt.text,
+          position: opt.position,
+          isCorrect: opt.isCorrect,
+        })),
+      });
+    }
+
+    const totalQuestions = questions.length;
+    const scorePercentage = totalQuestions > 0
+      ? Math.round((correctCount / totalQuestions) * 100)
+      : 100;
+    const isPassed = scorePercentage >= questionnaire.passingScore;
+
+    // Transaction to record answers and complete attempt
+    await this.prisma.$transaction(async (tx) => {
+      for (const ans of answerRecords) {
+        await tx.questionnaireAnswer.upsert({
+          where: {
+            attemptId_questionId: {
+              attemptId: ans.attemptId,
+              questionId: ans.questionId,
+            },
+          },
+          create: ans,
+          update: {
+            selectedOptionIds: ans.selectedOptionIds,
+            isCorrect: ans.isCorrect,
+            pointsEarned: ans.pointsEarned,
+          },
+        });
+      }
+
+      await tx.questionnaireAttempt.update({
+        where: { id: attempt.id },
+        data: {
+          status: AttemptStatus.SUBMITTED,
+          score: correctCount,
+          totalScore: totalQuestions,
+          scorePercentage,
+          isPassed,
+          submittedAt: new Date(),
+        },
+      });
+
+      // If passed and an enrollment is tied to this attempt, mark session complete
+      if (isPassed && attempt.enrollmentId) {
+        await tx.sessionProgress.upsert({
+          where: {
+            enrollmentId_sessionId: {
+              enrollmentId: attempt.enrollmentId,
+              sessionId: questionnaire.sessionId,
+            },
+          },
+          create: {
+            enrollmentId: attempt.enrollmentId,
+            sessionId: questionnaire.sessionId,
+            completedAt: new Date(),
+          },
+          update: {
+            completedAt: new Date(),
+          },
+        });
+      }
+    });
+
+    // Check if course is 100% complete for certificate
+    let certificate: any = null;
+    if (isPassed && attempt.enrollmentId) {
+      try {
+        certificate = await this.certificatesService.issue(attempt.enrollmentId, userId);
+      } catch (err) {
+        // Ignored if course not yet 100% or certificate already issued
+      }
+    }
+
+    // Audit log
+    await this.auditLog.log({
+      actorId: userId,
+      action: AuditAction.QUESTIONNAIRE_ATTEMPT_SUBMITTED,
+      entityType: 'QuestionnaireAttempt',
+      entityId: attempt.id,
+      metadata: {
+        questionnaireId,
+        score: correctCount,
+        totalScore: totalQuestions,
+        scorePercentage,
+        isPassed,
+      },
+    });
+
+    return {
+      attemptId: attempt.id,
+      questionnaireId,
+      score: correctCount,
+      totalScore: totalQuestions,
+      scorePercentage,
+      passingScore: questionnaire.passingScore,
+      isPassed,
+      submittedAt: new Date(),
+      certificate: certificate ? { id: certificate.id, code: certificate.code } : null,
+      review: reviewQuestions,
+    };
+  }
+
+  /**
+   * Get past attempts for a questionnaire by user
+   */
+  async getUserAttempts(questionnaireId: string, userId: string) {
+    return this.prisma.questionnaireAttempt.findMany({
+      where: {
+        questionnaireId,
+        userId,
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        status: true,
+        score: true,
+        totalScore: true,
+        scorePercentage: true,
+        isPassed: true,
+        startedAt: true,
+        submittedAt: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  /**
+   * Get details and review of a specific attempt
+   */
+  async getAttemptDetails(questionnaireId: string, attemptId: string, userId: string) {
+    const attempt = await this.prisma.questionnaireAttempt.findUnique({
+      where: { id: attemptId },
+      include: {
+        answers: true,
+        questionnaire: {
+          include: {
+            questions: {
+              orderBy: { position: 'asc' },
+              include: {
+                options: {
+                  orderBy: { position: 'asc' },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!attempt) {
+      throw new NotFoundException('Attempt not found');
+    }
+
+    if (attempt.userId !== userId) {
+      throw new ForbiddenException('Attempt belongs to another student');
+    }
+
+    if (attempt.questionnaireId !== questionnaireId) {
+      throw new BadRequestException('Attempt does not match this questionnaire');
+    }
+
+    const isSubmitted = attempt.status === AttemptStatus.SUBMITTED;
+
+    return {
+      attemptId: attempt.id,
+      questionnaireId: attempt.questionnaireId,
+      status: attempt.status,
+      score: attempt.score,
+      totalScore: attempt.totalScore,
+      scorePercentage: attempt.scorePercentage,
+      isPassed: attempt.isPassed,
+      startedAt: attempt.startedAt,
+      submittedAt: attempt.submittedAt,
+      review: isSubmitted
+        ? attempt.questionnaire.questions.map((q) => {
+            const ans = attempt.answers.find((a) => a.questionId === q.id);
+            return {
+              questionId: q.id,
+              text: q.text,
+              type: q.type,
+              explanation: q.explanation,
+              isCorrect: ans?.isCorrect ?? false,
+              selectedOptionIds: ans?.selectedOptionIds ?? [],
+              options: q.options.map((opt) => ({
+                id: opt.id,
+                text: opt.text,
+                position: opt.position,
+                isCorrect: opt.isCorrect,
+              })),
+            };
+          })
+        : null,
+    };
+  }
 }
+

@@ -16,11 +16,64 @@ export interface QuizQuestion {
   options: QuestionOption[];
 }
 
+export interface QuestionnaireLatestAttempt {
+  id: string;
+  status: 'IN_PROGRESS' | 'SUBMITTED';
+  score?: number | null;
+  totalScore?: number | null;
+  scorePercentage?: number | null;
+  isPassed?: boolean | null;
+  startedAt: string;
+  submittedAt?: string | null;
+}
+
+export interface QuestionnaireStartResponse {
+  attemptId: string;
+  questionnaireId: string;
+  title: string;
+  description?: string | null;
+  passingScore: number;
+  maxAttempts: number;
+  startedAt: string;
+  savedAnswers?: { questionId: string; selectedOptionIds: string[] }[];
+  questions: QuizQuestion[];
+}
+
+export interface QuestionnaireAttemptResult {
+  attemptId: string;
+  questionnaireId: string;
+  score: number;
+  totalScore: number;
+  scorePercentage: number;
+  passingScore: number;
+  isPassed: boolean;
+  submittedAt: string;
+  certificate?: { id: string; code: string } | null;
+  review: {
+    questionId: string;
+    text: string;
+    type: 'MULTIPLE_CHOICE' | 'MULTIPLE_SELECT' | 'TRUE_FALSE';
+    explanation?: string | null;
+    isCorrect: boolean;
+    selectedOptionIds: string[];
+    correctOptionIds: string[];
+    options: {
+      id: string;
+      text: string;
+      position: number;
+      isCorrect: boolean;
+    }[];
+  }[];
+}
+
 export interface SessionQuestionnaire {
   id: string;
   title: string;
   description?: string | null;
+  passingScore?: number;
+  maxAttempts?: number;
   questions: QuizQuestion[];
+  latestAttempt?: QuestionnaireLatestAttempt | null;
 }
 
 export interface SessionResource {
@@ -127,4 +180,32 @@ export const learningService = {
       `/enrollments/${enrollmentId}/certificate`
     );
   },
+
+  async startQuizAttempt(
+    questionnaireId: string,
+    enrollmentId?: string,
+  ): Promise<QuestionnaireStartResponse> {
+    return contentClient.post<QuestionnaireStartResponse>(
+      `/questionnaires/${questionnaireId}/attempts/start`,
+      { enrollmentId },
+    );
+  },
+
+  async submitQuizAttempt(
+    questionnaireId: string,
+    attemptId: string,
+    answers: { questionId: string; selectedOptionIds: string[] }[],
+  ): Promise<QuestionnaireAttemptResult> {
+    return contentClient.post<QuestionnaireAttemptResult>(
+      `/questionnaires/${questionnaireId}/attempts/${attemptId}/submit`,
+      { answers },
+    );
+  },
+
+  async getQuizAttempts(questionnaireId: string): Promise<QuestionnaireLatestAttempt[]> {
+    return contentClient.get<QuestionnaireLatestAttempt[]>(
+      `/questionnaires/${questionnaireId}/attempts`,
+    );
+  },
 };
+
