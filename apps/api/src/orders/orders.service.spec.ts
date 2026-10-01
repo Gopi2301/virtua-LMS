@@ -1,7 +1,7 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { EnrollmentStatus, OrderStatus, ProductStatus, ProductType } from '@prisma/client';
+import { EnrollmentStatus, OrderStatus, ProductStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OrdersService } from './orders.service';
 
@@ -10,20 +10,20 @@ const PRODUCT_ID = 'product-uuid';
 
 const prismaMock = {
   product: {
-    findMany: jest.fn() as jest.Mock<any>,
+    findMany: jest.fn() as any,
   },
   enrollment: {
-    findMany: jest.fn() as jest.Mock<any>,
-    upsert: jest.fn() as jest.Mock<any>,
+    findMany: jest.fn() as any,
+    upsert: jest.fn() as any,
   },
   order: {
-    findMany: jest.fn() as jest.Mock<any>,
-    findUnique: jest.fn() as jest.Mock<any>,
-    create: jest.fn() as jest.Mock<any>,
-    count: jest.fn() as jest.Mock<any>,
-    aggregate: jest.fn() as jest.Mock<any>,
+    findMany: jest.fn() as any,
+    findUnique: jest.fn() as any,
+    create: jest.fn() as any,
+    count: jest.fn() as any,
+    aggregate: jest.fn() as any,
   },
-  $transaction: jest.fn((callback: any) => callback(prismaMock)) as jest.Mock<any>,
+  $transaction: jest.fn((callback: any) => callback(prismaMock)) as any,
 };
 
 describe('OrdersService', () => {

@@ -12,30 +12,30 @@ const ORDER_ID = 'order-uuid';
 
 const prismaMock = {
   order: {
-    findUnique: jest.fn() as jest.Mock<any>,
-    update: jest.fn() as jest.Mock<any>,
+    findUnique: jest.fn() as any,
+    update: jest.fn() as any,
   },
   payment: {
-    upsert: jest.fn() as jest.Mock<any>,
+    upsert: jest.fn() as any,
   },
   enrollment: {
-    upsert: jest.fn() as jest.Mock<any>,
+    upsert: jest.fn() as any,
   },
-  $transaction: jest.fn((callback: any) => callback(prismaMock)) as jest.Mock<any>,
+  $transaction: jest.fn((callback: any) => callback(prismaMock)) as any,
 };
 
 const virtuaPaymentsMock = {
-  createCheckoutSession: jest.fn().mockResolvedValue({
+  createCheckoutSession: (jest.fn() as any).mockResolvedValue({
     provider: 'VIRTUAPAYMENTS',
     sessionId: 'vp_sess_123',
     checkoutUrl: 'https://mock.virtuapayments.internal/checkout/vp_sess_123',
     expiresAt: new Date().toISOString(),
-  }) as jest.Mock<any>,
-  verifyWebhookSignature: jest.fn().mockReturnValue(true) as jest.Mock<any>,
-  buildSimulatedWebhook: jest.fn() as jest.Mock<any>,
+  }),
+  verifyWebhookSignature: (jest.fn() as any).mockReturnValue(true),
+  buildSimulatedWebhook: jest.fn() as any,
 };
 
-const auditLogMock = { log: jest.fn() as jest.Mock<any> };
+const auditLogMock = { log: jest.fn() as any };
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
