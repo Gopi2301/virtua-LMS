@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------
+  # 1. PostgreSQL Database
+  # -------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: virtua_lms_db_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-virtua_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-virtua_password}
+      POSTGRES_DB: ${POSTGRES_DB:-virtua_lms}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-virtua_user} -d ${POSTGRES_DB:-virtua_lms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # -------------------------------------------------------------
+  # 2. Redis Cache & Job Queue
+  # -------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: virtua_lms_redis_prod
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # -------------------------------------------------------------
+  # 3. NestJS API Service
+  # -------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: virtua_lms_api_prod
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-virtua_user}:${POSTGRES_PASSWORD:-virtua_password}@db:5432/${POSTGRES_DB:-virtua_lms}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-https://keycloak.expertisorjobs.com}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-virtualogin}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-virtua-lms}
+    volumes:
+      - api_uploads:/app/apps/api/uploads
+    expose:
+      - "4000"
+    labels:
+      - "coolify.managed=true"
+
+  # -------------------------------------------------------------
+  # 4. Learner Web Portal (Vite React + Nginx)
+  # -------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_KEYCLOAK_URL: ${KEYCLOAK_URL:-https://keycloak.expertisorjobs.com}
+        VITE_KEYCLOAK_REALM: ${KEYCLOAK_REALM:-virtualogin}
+        VITE_KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-virtua-lms}
+    container_name: virtua_lms_web_prod
+    restart: unless-stopped
+    depends_on:
+      - api
+    expose:
+      - "80"
+    labels:
+      - "coolify.managed=true"
+
+  # -------------------------------------------------------------
+  # 5. Admin Console Portal (Vite React + Nginx)
+  # -------------------------------------------------------------
+  admin:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.admin
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_KEYCLOAK_URL: ${KEYCLOAK_URL:-https://keycloak.expertisorjobs.com}
+        VITE_KEYCLOAK_REALM: ${KEYCLOAK_REALM:-virtualogin}
+        VITE_KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-virtua-lms}
+    container_name: virtua_lms_admin_prod
+    restart: unless-stopped
+    depends_on:
+      - api
+    expose:
+      - "80"
+    labels:
+      - "coolify.managed=true"
+
+volumes:
+  postgres_data:
+  redis_data:
+  api_uploads:
