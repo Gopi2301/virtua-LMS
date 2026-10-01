@@ -235,13 +235,91 @@ export class CoursesService {
         }
         return existing
     }
-    async findPublicOne(id: string) {
+    async findPublicOne(idOrSlug: string) {
         const product = await this.prisma.product.findFirst({
-            where: { id, type: 'COURSE', status: 'ON_AIR' },
-            include: { course: { include: { category: true, sections: { orderBy: { position: 'asc' }, select: { id: true, title: true, description: true, position: true } } } } },
+            where: {
+                OR: [{ id: idOrSlug }, { slug: idOrSlug }],
+                type: 'COURSE',
+                status: 'ON_AIR'
+            },
+            include: {
+                course: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true,
+                                avatarUrl: true,
+                                bio: true,
+                            }
+                        },
+                        category: true,
+                        sections: {
+                            orderBy: { position: 'asc' },
+                            include: {
+                                sessions: {
+                                    orderBy: { position: 'asc' },
+                                    select: {
+                                        id: true,
+                                        title: true,
+                                        description: true,
+                                        position: true,
+                                        status: true,
+                                        isPreview: true,
+                                        isFree: true,
+                                        video: { select: { duration: true } },
+                                        _count: { select: { resources: true } },
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
         });
         if (!product) throw new NotFoundException('Course not found');
         return product;
+    }
+
+    async findPreviewSession(courseIdOrSlug: string, sessionId: string) {
+        const product = await this.prisma.product.findFirst({
+            where: {
+                OR: [{ id: courseIdOrSlug }, { slug: courseIdOrSlug }],
+                type: 'COURSE',
+                status: 'ON_AIR',
+            },
+        });
+        if (!product) throw new NotFoundException('Course not found');
+
+        const session = await this.prisma.session.findFirst({
+            where: {
+                id: sessionId,
+                section: { course: { productId: product.id } },
+                OR: [{ isPreview: true }, { isFree: true }],
+            },
+            include: {
+                video: true,
+                resources: { orderBy: { position: 'asc' } },
+                questionnaire: {
+                    include: {
+                        questions: {
+                            orderBy: { position: 'asc' },
+                            include: {
+                                options: {
+                                    orderBy: { position: 'asc' },
+                                    select: { id: true, text: true, position: true },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        if (!session) {
+            throw new NotFoundException('Preview session not found or not marked for free preview');
+        }
+        return session;
     }
 
     async query(queryCourseDto: CourseQueryDto, actor?: AuthenticatedUser) {

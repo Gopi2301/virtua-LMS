@@ -76,12 +76,18 @@ export class CoursesController {
         return this.coursesService.query(queryCourseDto);
     }
 
-    @Get(':id')
-    @ApiOperation({ summary: "Get a course by id" })
+    @Get(':idOrSlug/preview/:sessionId')
+    @ApiOperation({ summary: "Get a free preview session for a course" })
+    findPreviewSession(@Param('idOrSlug') idOrSlug: string, @Param('sessionId') sessionId: string) {
+        return this.coursesService.findPreviewSession(idOrSlug, sessionId);
+    }
+
+    @Get(':idOrSlug')
+    @ApiOperation({ summary: "Get a course by id or slug" })
     @ApiResponse({ status: 200, description: "Course fetched successfully" })
     @ApiResponse({ status: 404, description: "Course not found" })
-    findOne(@Param('id') id: string) {
-        return this.coursesService.findPublicOne(id);
+    findOne(@Param('idOrSlug') idOrSlug: string) {
+        return this.coursesService.findPublicOne(idOrSlug);
     }
 
     @Put(':id')

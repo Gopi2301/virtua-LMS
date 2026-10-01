@@ -8,6 +8,7 @@ import { Curriculum } from './Curriculum';
 import { safeUrl, courseStatuses, navigate, statusLabel } from './helpers';
 import { useLoad } from './useLoad';
 import { CategoryFormModal } from './Categories';
+import { toast } from 'sonner';
 
 
 
@@ -90,6 +91,7 @@ function CourseDetailsForm({ course, onClose, onSaved }: { course?: Course; onCl
         categoryId: selectedCategoryId || (course ? null : undefined),
       };
       const saved = course ? await api.put<Course>(`/courses/${course.id}`, body) : await api.post<Course>('/courses', body);
+      toast.success(course ? 'Course details updated.' : 'Course created.', { description: course ? 'Your course information was saved.' : 'Your draft course is ready for curriculum setup.' });
       onSaved(saved);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to save course');
@@ -243,7 +245,6 @@ export function CourseWorkspace({ id }: { id: string }) {
   const [action, setAction] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState('');
   const course = result.data;
   const refresh = () => { result.reload(); history.reload(); };
   if (result.loading) return <div className="loading" role="status">Opening course…</div>;
@@ -256,23 +257,49 @@ export function CourseWorkspace({ id }: { id: string }) {
   const checks = [!!course.description?.trim(), sessions.length > 0, sessions.every(s => s.status !== 'VIDEO' || !!s.video?.vimeoVideoId)];
   const ready = checks.every(Boolean);
   const actionNames: Record<string, string> = { submit: 'Submit for review', approve: 'Approve course', 'request-changes': 'Request changes', publish: 'Publish course', unpublish: 'Unpublish course', archive: 'Archive course' };
-  async function transition(e: FormEvent<HTMLFormElement>) { e.preventDefault(); const note = String(new FormData(e.currentTarget).get('note') || '').trim(); if (!action) return; setBusy(true); setError(null); try { await api.post(`/courses/${id}/publishing/${action}`, action === 'submit' ? { note } : { comment: note }); setAction(null); setNotice('Course status updated.'); refresh(); } catch (err) { setError(err instanceof Error ? err.message : 'Unable to update course status'); } finally { setBusy(false); } }
+  async function transition(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const note = String(new FormData(e.currentTarget).get('note') || '').trim();
+    if (!action) return;
+    const currentAction = action;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.post(`/courses/${id}/publishing/${action}`, action === 'submit' ? { note } : { comment: note });
+      setAction(null);
+      if (currentAction === 'submit') {
+        toast.success('Course status updated.', { description: 'Your course is under review. Content is fixed until the reviewer finishes.' });
+      } else if (currentAction === 'approve') {
+        toast.success('Course approved.', { description: 'Your course has been approved and is ready to be published.' });
+      } else if (currentAction === 'request-changes') {
+        toast.warning('Changes requested.', { description: 'Feedback and required changes have been sent to the author.' });
+      } else if (currentAction === 'publish') {
+        toast.success('Course published.', { description: 'This course is now live in the public catalog.' });
+      } else if (currentAction === 'unpublish') {
+        toast.info('Course unpublished.', { description: 'The course has returned to draft mode for editing.' });
+      } else if (currentAction === 'archive') {
+        toast.info('Course archived.', { description: 'The course has been archived.' });
+      } else {
+        toast.success('Course status updated.');
+      }
+      refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unable to update course status';
+      setError(msg);
+      toast.error('Status update failed.', { description: msg });
+    } finally {
+      setBusy(false);
+    }
+  }
   const actionButton = (key: string, primary = false) => <button className={`btn ${primary ? '' : 'secondary'}`} disabled={key === 'submit' && !ready} onClick={() => { setAction(key); setError(null); }}>{actionNames[key]}</button>;
   return <><a className="back-link" href="#/courses">← Course library</a><div className="page-heading course-heading"><div><div className="actions"><p className="eyebrow">COURSE WORKSPACE</p><StatusBadge status={course.status} /></div><h1>{course.title}</h1><p>{statusLabel(course.course.level)} · {sections.length} sections · {sessions.length} lessons</p></div><div className="actions">{editable && <button className="btn secondary" onClick={() => setEditing(true)}>Edit details</button>}{editable && actionButton('submit', true)}{manager && course.status === 'IN_REVIEW' && <>{actionButton('request-changes')}{actionButton('approve', true)}</>}{manager && course.status === 'APPROVED' && actionButton('publish', true)}{manager && course.status === 'ON_AIR' && actionButton('unpublish')}{manager && ['DRAFT','CHANGES_REQUESTED','APPROVED','ON_AIR'].includes(course.status) && actionButton('archive')}</div></div>
-    {notice && <p className="notice" role="status">{notice}</p>}
     {course.status === 'CHANGES_REQUESTED' && history.data?.[0]?.reviewComment && (
       <div className="notice warning">
         <strong>{owner ? 'Feedback from your reviewer' : 'Requested changes (sent to author)'}</strong>
         <p>{history.data[0].reviewComment}</p>
       </div>
     )}
-    {!editable && (
-      <div className="notice">
-        {owner
-          ? (course.status === 'IN_REVIEW' ? 'Your course is under review. Content is fixed until the reviewer finishes.' : course.status === 'APPROVED' ? 'Your course has been approved and is ready to be published.' : course.status === 'ON_AIR' ? 'This course is published and live. Unpublish it to make changes.' : 'This course is read-only at its current stage.')
-          : (course.status === 'IN_REVIEW' ? 'You are reviewing this course. Only its author can edit the curriculum.' : course.status === 'CHANGES_REQUESTED' ? 'Changes have been requested. Awaiting updates and re-submission from the author.' : course.status === 'DRAFT' ? 'This course is in draft. The author has not yet submitted it for review.' : course.status === 'APPROVED' ? 'This course is approved and ready to be published.' : course.status === 'ON_AIR' ? 'This course is published and live.' : 'You are viewing this course in read-only mode.')}
-      </div>
-    )}
+
     <div className="workspace-grid"><section><div className="filter-tabs">{['curriculum','details','preview','activity'].map(t => <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>{statusLabel(t)}</button>)}</div>
     {tab === 'curriculum' && <Curriculum course={course} editable={editable} onSaved={refresh} />}
     {tab === 'details' && <div className="panel detail-panel"><div className="section-heading"><h2>Course details</h2>{editable && <button className="btn secondary" onClick={() => setEditing(true)}>Edit details</button>}</div><p className="eyebrow">INTRODUCTION</p><p className="prose">{course.shortDescription || 'No introduction yet.'}</p><p className="eyebrow">ABOUT THIS COURSE</p><p className="prose">{course.description || 'No description yet.'}</p><dl className="detail-grid"><div><dt>Category</dt><dd>{course.course.category?.name || 'Uncategorized'}</dd></div><div><dt>Language</dt><dd>{course.course.language || 'en'}</dd></div><div><dt>Instructor</dt><dd>{course.course.author?.firstName || course.course.author?.email}</dd></div><div><dt>Last updated</dt><dd>{new Date(course.updatedAt).toLocaleDateString()}</dd></div></dl></div>}

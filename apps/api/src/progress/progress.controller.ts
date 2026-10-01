@@ -1,4 +1,4 @@
-﻿import {
+import {
     Body,
     Controller,
     Get,
@@ -35,6 +35,20 @@ export class ProgressController {
     @ApiResponse({ status: 200, description: 'Progress breakdown per session' })
     getProgress(@Param('enrollmentId', ParseUUIDPipe) enrollmentId: string, @Req() req) {
         return this.progressService.getEnrollmentProgress(req.user.id, enrollmentId);
+    }
+
+    @Get('sessions/:sessionId')
+    @Roles('STUDENT', 'AUTHOR', 'MANAGER', 'SUPER_ADMIN')
+    @ApiOperation({ summary: 'Get full session details for an enrollment' })
+    @ApiParam({ name: 'enrollmentId', description: 'Enrollment ID' })
+    @ApiParam({ name: 'sessionId', description: 'Session ID' })
+    @ApiResponse({ status: 200, description: 'Session details with resources and quiz' })
+    getSession(
+        @Param('enrollmentId', ParseUUIDPipe) enrollmentId: string,
+        @Param('sessionId', ParseUUIDPipe) sessionId: string,
+        @Req() req,
+    ) {
+        return this.progressService.getEnrollmentSession(req.user.id, enrollmentId, sessionId);
     }
 
     @Post()

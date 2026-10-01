@@ -5,6 +5,7 @@ import { ApplicationsPage, ProfilePage, UsersPage } from './Administration';
 import { CategoriesPage } from './Categories';
 import { CoursesPage, CourseWorkspace, Dashboard, ReviewQueue } from './Courses';
 import { ErrorNotice } from './ui';
+import { Toaster } from '@virtua-lms/ui';
 import './console.css';
 
 function Icon({ name }: { name: string }) {
@@ -50,10 +51,10 @@ export default function ConsoleApp() {
   else if (section === 'applications') page = <ApplicationsPage />;
   else if (section === 'profile') page = <ProfilePage />;
   else page = <div className="panel detail-panel"><h1>Page not found</h1><a className="btn" href="#/overview">Back to overview</a></div>;
-  return <div className="console"><a className="skip-link" href="#main-content" onClick={e => { e.preventDefault(); document.getElementById('main-content')?.focus(); }}>Skip to content</a>
+  return <><div className="console"><a className="skip-link" href="#main-content" onClick={e => { e.preventDefault(); document.getElementById('main-content')?.focus(); }}>Skip to content</a>
     {menu && <button className="sidebar-scrim" aria-label="Close navigation" onClick={() => setMenu(false)} />}
     <aside id="console-navigation" className={`sidebar ${menu ? 'is-open' : ''}`}><a className="brand" href="#/overview"><span className="brand-icon">v.</span><span>virtua<span className="brand-suffix"> academy</span></span></a><div className="workspace-name"><span className="workspace-avatar">V</span><div><strong>Virtua Academy</strong><small>{manager ? 'Administration workspace' : 'Author workspace'}</small></div></div><nav aria-label="Main navigation">{links.map((link, i) => <div key={link.id}>{links[i - 1]?.group !== link.group && <p className="nav-label">{link.group}</p>}<a href={`#/${link.id}`} aria-current={section === link.id ? 'page' : undefined} className={section === link.id ? 'active' : ''}><Icon name={link.id} /><span>{link.title}</span>{section === link.id && <span className="nav-dot" />}</a></div>)}</nav><div className="sidebar-bottom"><span className="small muted">A little knowledge.<br />A world of possibilities.</span><div className="sidebar-account"><span className="account-avatar">{(auth.user.name || auth.user.email).charAt(0).toUpperCase()}</span><div><strong>{auth.user.name || auth.user.username}</strong><small>{auth.user.roles.includes('SUPER_ADMIN') ? 'Administrator' : manager ? 'Manager' : 'Author'}</small></div><button className="icon-button" aria-label="Sign out" title="Sign out" onClick={auth.logout}>↪</button></div></div></aside>
     <div className="console-body"><header className="console-header"><div className="actions"><button className="icon-button menu-toggle" aria-label={menu ? 'Close navigation' : 'Open navigation'} aria-expanded={menu} aria-controls="console-navigation" onClick={() => setMenu(!menu)}>☰</button><span>Workspace</span><span className="muted">/</span><strong>{links.find(l => l.id === section)?.title || 'Course'}</strong></div><a className="header-account" href="#/profile"><span className="status-dot" />{manager ? 'Admin console' : 'Author console'}<span className="account-avatar">{(auth.user.name || auth.user.email).charAt(0).toUpperCase()}</span></a></header><main id="main-content" tabIndex={-1} className="console-main"><PageBoundary key={route}>{page}</PageBoundary></main><footer className="console-footer"><span>Virtua Academy</span><span>Built for better learning.</span></footer></div>
-  </div>;
+  </div><Toaster /></>;
 }
 

@@ -1,4 +1,4 @@
-﻿import {
+import {
     BadRequestException,
     ForbiddenException,
     Injectable,
@@ -49,9 +49,20 @@ export class ProgressService {
         return progress;
     }
 
-    // ─── Get full progress for an enrollment ─────────────────────────────────
+    // ─── Get full progress and curriculum for an enrollment ─────────────────
     async getEnrollmentProgress(userId: string, enrollmentId: string) {
         const enrollment = await this.findActiveEnrollmentOrThrow(enrollmentId, userId);
+
+        const product = await this.prisma.product.findUnique({
+            where: { id: enrollment.productId },
+            include: {
+                course: {
+                    include: {
+                        author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+                    },
+                },
+            },
+        });
 
         // Fetch all sessions in the product's courses
         const sections = await this.prisma.section.findMany({
@@ -62,34 +73,60 @@ export class ProgressService {
             },
             include: {
                 sessions: {
-                    select: { id: true, title: true, position: true, status: true },
+                    select: {
+                        id: true,
+                        title: true,
+                        position: true,
+                        status: true,
+                        description: true,
+                        isPreview: true,
+                        isFree: true,
+                        video: { select: { duration: true } },
+                        _count: { select: { resources: true } },
+                    },
                     orderBy: { position: 'asc' },
                 },
             },
             orderBy: { position: 'asc' },
         });
 
-        const completedProgress = await this.prisma.sessionProgress.findMany({
-            where: { enrollmentId, completedAt: { not: null } },
-            select: { sessionId: true },
-        });
-
         const allProgress = await this.prisma.sessionProgress.findMany({
             where: { enrollmentId },
         });
 
-        const totalSessions = sections.flatMap((s) => s.sessions).length;
-        const completedCount = completedProgress.length;
+        const certificate = await this.prisma.certificate.findUnique({
+            where: { enrollmentId },
+            select: { id: true, code: true, issuedAt: true },
+        });
+
+        const allSessions = sections.flatMap((s) => s.sessions);
+        const totalSessions = allSessions.length;
+        const completedSessions = allProgress.filter((p) => p.completedAt).length;
         const percentComplete = totalSessions > 0
-            ? Math.round((completedCount / totalSessions) * 100)
+            ? Math.round((completedSessions / totalSessions) * 100)
             : 0;
+
+        let nextSessionId = allSessions[0]?.id || null;
+        for (const sess of allSessions) {
+            const prog = allProgress.find((p) => p.sessionId === sess.id);
+            if (!prog || !prog.completedAt) {
+                nextSessionId = sess.id;
+                break;
+            }
+        }
 
         return {
             enrollmentId,
             productId: enrollment.productId,
+            productTitle: product?.title,
+            productSlug: product?.slug,
+            thumbnail: product?.thumbnail,
+            author: product?.course?.author,
             percentComplete,
-            completedSessions: completedCount,
+            completedSessions,
             totalSessions,
+            certificate,
+            nextSessionId,
             sections: sections.map((section) => ({
                 id: section.id,
                 title: section.title,
@@ -103,6 +140,57 @@ export class ProgressService {
                     };
                 }),
             })),
+        };
+    }
+
+    // ─── Get specific session content inside an enrollment ───────────────────
+    async getEnrollmentSession(userId: string, enrollmentId: string, sessionId: string) {
+        const enrollment = await this.findActiveEnrollmentOrThrow(enrollmentId, userId);
+
+        const session = await this.prisma.session.findFirst({
+            where: {
+                id: sessionId,
+                section: {
+                    course: {
+                        product: { id: enrollment.productId },
+                    },
+                },
+            },
+            include: {
+                video: true,
+                resources: { orderBy: { position: 'asc' } },
+                questionnaire: {
+                    include: {
+                        questions: {
+                            orderBy: { position: 'asc' },
+                            include: {
+                                options: {
+                                    orderBy: { position: 'asc' },
+                                    select: { id: true, text: true, position: true, isCorrect: true },
+                                },
+                            },
+                        },
+                    },
+                },
+                section: {
+                    select: { id: true, title: true },
+                },
+            },
+        });
+
+        if (!session) {
+            throw new NotFoundException('Session not found in this enrollment');
+        }
+
+        const progress = await this.prisma.sessionProgress.findUnique({
+            where: { enrollmentId_sessionId: { enrollmentId, sessionId } },
+        });
+
+        return {
+            ...session,
+            watchTime: progress?.watchTime ?? 0,
+            completed: !!progress?.completedAt,
+            completedAt: progress?.completedAt ?? null,
         };
     }
 

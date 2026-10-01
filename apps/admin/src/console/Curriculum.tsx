@@ -4,6 +4,7 @@ import { contentClient as api } from '../services/apiClient';
 import type { Course, Question, Questionnaire, Section, Session } from './types';
 import { Empty, ErrorNotice, Field, Modal } from './ui';
 import { safeUrl, statusLabel } from './helpers';
+import { toast } from 'sonner';
 
 type Editor = { kind: 'section'; section?: Section } | { kind: 'session'; section: Section; session?: Session } | { kind: 'video' | 'resource' | 'quiz'; session: Session } | { kind: 'question'; quiz: Questionnaire; question?: Question };
 export function Curriculum({ course, editable, onSaved }: { course: Course; editable: boolean; onSaved: () => void }) {
@@ -25,7 +26,7 @@ export function Curriculum({ course, editable, onSaved }: { course: Course; edit
     </div></details>)}{editable && <button className="add-lesson" onClick={() => setEditor({ kind: 'session', section })}>＋ Add lesson</button>}
     </section>)}</div>
     {editor && <ContentEditor editor={editor} courseId={course.id} onClose={() => setEditor(null)} onSaved={() => { setEditor(null); onSaved(); }} />}
-    {removing && <Modal title="Remove course content?" onClose={() => setRemoving(null)} busy={busy}><p>Remove <strong>{removing.label}</strong>? Any content inside it will also be removed. This cannot be undone.</p><ErrorNotice error={error} /><div className="dialog-actions"><button className="btn secondary" disabled={busy} onClick={() => setRemoving(null)}>Cancel</button><button className="btn destructive" disabled={busy} onClick={async () => { setBusy(true); setError(null); try { await api.delete(removing.endpoint); setRemoving(null); onSaved(); } catch (err) { setError(err instanceof Error ? err.message : 'Unable to remove content'); } finally { setBusy(false); } }}>{busy ? 'Removing…' : 'Remove content'}</button></div></Modal>}
+    {removing && <Modal title="Remove course content?" onClose={() => setRemoving(null)} busy={busy}><p>Remove <strong>{removing.label}</strong>? Any content inside it will also be removed. This cannot be undone.</p><ErrorNotice error={error} /><div className="dialog-actions"><button className="btn secondary" disabled={busy} onClick={() => setRemoving(null)}>Cancel</button><button className="btn destructive" disabled={busy} onClick={async () => { setBusy(true); setError(null); try { await api.delete(removing.endpoint); toast.info('Content removed.', { description: `"${removing.label}" was deleted.` }); setRemoving(null); onSaved(); } catch (err) { setError(err instanceof Error ? err.message : 'Unable to remove content'); } finally { setBusy(false); } }}>{busy ? 'Removing…' : 'Remove content'}</button></div></Modal>}
   </>;
 }
 
@@ -82,6 +83,7 @@ function ContentEditor({ editor, courseId, onClose, onSaved }: { editor: Editor;
       if (['PDF', 'ZIP'].includes(res.resourceType)) {
         setResourceType(res.resourceType);
       }
+      toast.success('Upload complete.', { description: `${res.fileName} (${Math.round(res.fileSize / 1024)} KB)` });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to upload file');
     } finally {
@@ -97,12 +99,15 @@ function ContentEditor({ editor, courseId, onClose, onSaved }: { editor: Editor;
       if (editor.kind === 'section') {
         const body = { title: text('title'), description: text('description') };
         if (editor.section) await api.patch(`/sections/${editor.section.id}`, body); else await api.post('/sections', { ...body, courseId });
+        toast.success(editor.section ? 'Section updated.' : 'Section created.');
       } else if (editor.kind === 'session') {
         const body = { title: text('title'), description: text('description'), type: text('type'), isPreview: form.has('isPreview'), isFree: form.has('isFree') };
         if (editor.session) await api.patch(`/sessions/${editor.session.id}`, body); else await api.post('/sessions', { ...body, sectionId: editor.section.id });
+        toast.success(editor.session ? 'Lesson updated.' : 'Lesson created.');
       } else if (editor.kind === 'video') {
         const body = { vimeoVideoId: text('vimeoVideoId'), duration: Number(form.get('duration')), status: 'READY' };
         if (editor.session.video) await api.patch(`/videos/${editor.session.id}`, body); else await api.post('/videos', { ...body, sessionId: editor.session.id });
+        toast.success('Video attached.');
       } else if (editor.kind === 'resource') {
         const finalUrl = resourceUrl.trim() || text('url');
         const lowerUrl = finalUrl.toLowerCase().split('?')[0];
@@ -122,14 +127,17 @@ function ContentEditor({ editor, courseId, onClose, onSaved }: { editor: Editor;
           fileName: uploadedFile?.name,
           fileSize: uploadedFile?.size,
         });
+        toast.success('Resource added.');
       } else if (editor.kind === 'quiz') {
         const body = { title: text('title'), passingScore: Number(form.get('passingScore')), maxAttempts: Number(form.get('maxAttempts')) };
         if (editor.session.questionnaire) await api.patch(`/questionnaires/${editor.session.questionnaire.id}`, body); else await api.post('/questionnaires', { ...body, sessionId: editor.session.id });
+        toast.success('Questionnaire saved.');
       } else if (editor.kind === 'question') {
         const correct = options.filter(o => o.isCorrect).length;
         if (options.some(o => !o.text.trim()) || !correct || (questionType !== 'MULTIPLE_SELECT' && correct !== 1)) throw new Error('Add text to every answer and select the correct answer(s). Single-choice questions need exactly one correct answer.');
         const body = { text: text('text'), explanation: text('explanation'), type: questionType, options: options.map((o, position) => ({ ...o, text: o.text.trim(), position })) };
         if (editor.question) await api.patch(`/questionnaires/${editor.quiz.id}/questions/${editor.question.id}`, body); else await api.post(`/questionnaires/${editor.quiz.id}/questions`, body);
+        toast.success(editor.question ? 'Question updated.' : 'Question added.');
       }
       onSaved();
     } catch (err) { setError(err instanceof Error ? err.message : 'Unable to save content'); }

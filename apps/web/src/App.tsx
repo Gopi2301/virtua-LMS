@@ -9,16 +9,27 @@ import {
   CardContent,
   Badge,
   Input,
-  LoginView,
 } from '@virtua-lms/ui';
 import { usersService, type LMSUser } from './services/users.service';
 import { authorApplicationService } from './services/authorApplication.service';
 import type { AuthorApplication } from '@virtua-lms/types';
+import { CatalogView } from './components/CatalogView';
+import { CourseDetailView } from './components/CourseDetailView';
+import { MyLearningView } from './components/MyLearningView';
+import { CoursePlayerView } from './components/CoursePlayerView';
+import { VerifyCertificateView } from './components/VerifyCertificateView';
 import './App.css';
 
 export const App: React.FC = () => {
   const { initialized, authenticated, user, login, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'instructor' | 'profile'>('dashboard');
+
+  // Active view state
+  const [activeTab, setActiveTab] = useState<
+    'catalog' | 'detail' | 'learning' | 'player' | 'verify' | 'instructor' | 'profile'
+  >('catalog');
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const [activeEnrollmentId, setActiveEnrollmentId] = useState<string | null>(null);
+  const [verifyCode, setVerifyCode] = useState<string>('');
 
   // Profile state
   const [profileData, setProfileData] = useState<LMSUser | null>(null);
@@ -41,6 +52,20 @@ export const App: React.FC = () => {
   const [appMessage, setAppMessage] = useState<string | null>(null);
 
   const isAuthor = user?.roles?.includes('AUTHOR') || profileData?.roles?.includes('AUTHOR');
+
+  // Check URL query parameters for direct links (e.g. ?verify=ABC123 or ?course=slug)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('verify');
+    const course = params.get('course');
+    if (code) {
+      setVerifyCode(code);
+      setActiveTab('verify');
+    } else if (course) {
+      setSelectedCourse(course);
+      setActiveTab('detail');
+    }
+  }, []);
 
   // Fetch current user DB profile
   const fetchProfile = useCallback(async () => {
@@ -128,7 +153,7 @@ export const App: React.FC = () => {
       });
 
       setApplication(created);
-      setAppMessage('Application submitted successfully! Our team will review your profile.');
+      setAppMessage('Application submitted successfully! Our curriculum team will review your profile.');
     } catch (err: any) {
       setAppMessage(`Error: ${err.message || 'Failed to submit application'}`);
     } finally {
@@ -142,72 +167,9 @@ export const App: React.FC = () => {
         <div className="text-center space-y-4">
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[#F3E700] border-t-transparent" />
           <p className="text-sm font-medium text-[#b3b3b3] tracking-wide">
-            Connecting to Keycloak SSO...
+            Connecting to Virtua LMS...
           </p>
         </div>
-      </div>
-    );
-  }
-
-  // Fresh Login Screen when not authenticated
-  if (!authenticated) {
-    return (
-      <div className="min-h-screen bg-[#121212] text-white flex flex-col">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-[#272727] bg-[#181818]/70 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3E700] text-black font-extrabold text-xl shadow-[0_0_16px_rgba(243,231,0,0.3)]">
-              V
-            </div>
-            <div>
-              <span className="text-lg font-bold tracking-tight text-white block">
-                Virtua LMS
-              </span>
-              <span className="text-[11px] text-[#7c7c7c] tracking-wider uppercase block">
-                Student & Creator Portal
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="hidden sm:inline-flex text-[11px] border-[#3a3a3a] text-[#b3b3b3]">
-              Keycloak: virtualogin
-            </Badge>
-            <Button size="sm" onClick={login}>
-              Sign In
-            </Button>
-          </div>
-        </header>
-
-        <main className="flex-1 flex items-center justify-center">
-          <LoginView
-            portalTitle="Virtua LMS"
-            portalSubtitle="Learner & Student Ecosystem"
-            badgeText="Student Portal"
-            badgeVariant="default"
-            description="Empowering modern learners and instructors with immersive course tracks, interactive workshops, and cryptographically verified certifications."
-            features={[
-              {
-                title: "Curated Course Paths",
-                description: "Structured learning tracks crafted by vetted industry practitioners.",
-              },
-              {
-                title: "Interactive Coding Labs",
-                description: "Direct hands-on workshops with instant feedback and grading.",
-              },
-              {
-                title: "Milestone & Skill Tracking",
-                description: "Real-time synchronization across devices with verifiable proof of work.",
-              },
-              {
-                title: "Collaborative Discussions",
-                description: "Ask questions, share code snippets, and engage with mentors.",
-              },
-            ]}
-            onLogin={login}
-            loginButtonText="Sign In with Student SSO"
-            realmName="virtualogin"
-            footerNote="Secured via OpenID Connect (PKCE S256) &bull; Realm: virtualogin &bull; Client: virtua-lms"
-          />
-        </main>
       </div>
     );
   }
@@ -219,11 +181,25 @@ export const App: React.FC = () => {
 
   const avatarChar = displayName.charAt(0).toUpperCase();
 
+  // Full-screen Course Player View
+  if (activeTab === 'player' && activeEnrollmentId) {
+    return (
+      <CoursePlayerView
+        enrollmentId={activeEnrollmentId}
+        studentName={displayName}
+        onExit={() => setActiveTab('learning')}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#121212] text-white flex flex-col font-sans">
       {/* Top Navbar */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-[#272727] bg-[#181818]/90 backdrop-blur-md sticky top-0 z-30">
-        <div className="flex items-center gap-3">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[#272727] bg-[#181818]/90 backdrop-blur-md sticky top-0 z-30">
+        <div
+          onClick={() => setActiveTab('catalog')}
+          className="flex items-center gap-3 cursor-pointer select-none"
+        >
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3E700] text-black font-extrabold text-xl shadow-[0_0_16px_rgba(243,231,0,0.3)]">
             V
           </div>
@@ -232,229 +208,198 @@ export const App: React.FC = () => {
               Virtua LMS
             </h1>
             <p className="text-[11px] text-[#7c7c7c] tracking-wider uppercase mt-1">
-              Learner Portal
+              Academy & Learner Portal
             </p>
           </div>
         </div>
 
+        {/* Auth / Profile controls */}
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1f1f1f] border border-[#3a3a3a] text-xs">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[#b3b3b3]">SSO:</span>
-            <span className="font-mono text-white font-medium">virtualogin</span>
-          </div>
-
-          <div className="flex items-center gap-3 pl-2 border-l border-[#272727]">
-            <div className="h-9 w-9 rounded-full bg-[#1f1f1f] border border-[#3a3a3a] flex items-center justify-center text-sm font-bold text-[#F3E700]">
-              {avatarChar}
-            </div>
-            <div className="hidden sm:block text-left">
-              <div className="text-xs font-semibold text-white leading-tight">
-                {displayName}
+          {authenticated ? (
+            <>
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1f1f1f] border border-[#3a3a3a] text-xs">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[#b3b3b3]">SSO:</span>
+                <span className="font-mono text-white font-medium">{user?.username || 'user'}</span>
               </div>
-              <div className="text-[11px] text-[#7c7c7c] leading-tight font-mono">
-                {user?.email}
-              </div>
-            </div>
-          </div>
 
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={logout}
-            className="hover:border-[#f3727f]/50 hover:text-[#f3727f]"
-          >
-            Sign Out
-          </Button>
+              <div
+                onClick={() => setActiveTab('profile')}
+                className="flex items-center gap-3 pl-2 border-l border-[#272727] cursor-pointer group"
+              >
+                <div className="h-9 w-9 rounded-full bg-[#1f1f1f] border border-[#3a3a3a] flex items-center justify-center text-sm font-bold text-[#F3E700] group-hover:border-[#F3E700] transition">
+                  {avatarChar}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <div className="text-xs font-semibold text-white leading-tight group-hover:text-[#F3E700] transition">
+                    {displayName}
+                  </div>
+                  <div className="text-[11px] text-[#7c7c7c] leading-tight font-mono">
+                    {user?.email}
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={logout}
+                className="hover:border-[#f3727f]/50 hover:text-[#f3727f]"
+              >
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline text-xs text-zinc-400">
+                Sign in to save progress & earn certificates
+              </span>
+              <Button size="sm" onClick={login}>
+                Sign In
+              </Button>
+            </div>
+          )}
         </div>
       </header>
 
       {/* Main Container */}
       <div className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 md:p-8 space-y-6">
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-[#272727] pb-3">
+        <nav className="flex items-center gap-2 border-b border-[#272727] pb-3 overflow-x-auto scrollbar-none">
           <button
-            className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide uppercase transition-all ${
-              activeTab === 'dashboard'
+            className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide uppercase transition-all whitespace-nowrap ${
+              activeTab === 'catalog' || activeTab === 'detail'
                 ? 'bg-[#F3E700] text-black shadow-[0_2px_12px_rgba(243,231,0,0.3)]'
                 : 'text-[#b3b3b3] hover:text-white hover:bg-[#1f1f1f]'
             }`}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => setActiveTab('catalog')}
+          >
+            Explore Catalog
+          </button>
+
+          <button
+            className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide uppercase transition-all whitespace-nowrap ${
+              activeTab === 'learning'
+                ? 'bg-[#F3E700] text-black shadow-[0_2px_12px_rgba(243,231,0,0.3)]'
+                : 'text-[#b3b3b3] hover:text-white hover:bg-[#1f1f1f]'
+            }`}
+            onClick={() => {
+              if (!authenticated) {
+                login();
+              } else {
+                setActiveTab('learning');
+              }
+            }}
           >
             My Learning
           </button>
+
           <button
-            className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide uppercase transition-all ${
+            className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide uppercase transition-all whitespace-nowrap ${
+              activeTab === 'verify'
+                ? 'bg-[#F3E700] text-black shadow-[0_2px_12px_rgba(243,231,0,0.3)]'
+                : 'text-[#b3b3b3] hover:text-white hover:bg-[#1f1f1f]'
+            }`}
+            onClick={() => setActiveTab('verify')}
+          >
+            Verify Credential
+          </button>
+
+          <button
+            className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide uppercase transition-all whitespace-nowrap ${
               activeTab === 'instructor'
                 ? 'bg-[#F3E700] text-black shadow-[0_2px_12px_rgba(243,231,0,0.3)]'
                 : 'text-[#b3b3b3] hover:text-white hover:bg-[#1f1f1f]'
             }`}
-            onClick={() => setActiveTab('instructor')}
+            onClick={() => {
+              if (!authenticated) {
+                login();
+              } else {
+                setActiveTab('instructor');
+              }
+            }}
           >
             Become an Instructor
           </button>
-          <button
-            className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide uppercase transition-all ${
-              activeTab === 'profile'
-                ? 'bg-[#F3E700] text-black shadow-[0_2px_12px_rgba(243,231,0,0.3)]'
-                : 'text-[#b3b3b3] hover:text-white hover:bg-[#1f1f1f]'
-            }`}
-            onClick={() => setActiveTab('profile')}
-          >
-            Profile & Settings
-          </button>
-        </div>
 
-        {/* TAB 1: Student Dashboard */}
-        {activeTab === 'dashboard' && (
-          <div className="space-y-6">
-            {/* Welcome Banner */}
-            <div className="rounded-2xl border border-[#272727] bg-gradient-to-r from-[#181818] via-[#1f1f1f] to-[#181818] p-6 md:p-8 relative overflow-hidden shadow-xl">
-              <div className="relative z-10 space-y-2">
-                <Badge variant="default" className="text-[11px] uppercase tracking-wider">
-                  Active Enrollment
-                </Badge>
-                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
-                  Welcome back, {displayName}!
-                </h2>
-                <p className="text-sm text-[#b3b3b3] max-w-xl leading-relaxed">
-                  Continue where you left off. You have active workshops and learning tracks waiting for completion.
-                </p>
-              </div>
-              <div className="pointer-events-none absolute -right-10 -bottom-10 h-48 w-48 rounded-full bg-[#F3E700]/10 blur-[64px]" />
-            </div>
+          {authenticated && (
+            <button
+              className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide uppercase transition-all whitespace-nowrap ${
+                activeTab === 'profile'
+                  ? 'bg-[#F3E700] text-black shadow-[0_2px_12px_rgba(243,231,0,0.3)]'
+                  : 'text-[#b3b3b3] hover:text-white hover:bg-[#1f1f1f]'
+              }`}
+              onClick={() => setActiveTab('profile')}
+            >
+              Profile & Settings
+            </button>
+          )}
+        </nav>
 
-            {/* Quick Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Card className="border-[#272727] bg-[#181818]">
-                <CardHeader className="p-5 pb-2">
-                  <CardDescription className="text-xs text-[#7c7c7c] uppercase tracking-wider">
-                    Enrolled Tracks
-                  </CardDescription>
-                  <CardTitle className="text-3xl font-extrabold text-white">
-                    3
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-5 pt-0 text-xs text-[#b3b3b3]">
-                  All tracks currently in progress
-                </CardContent>
-              </Card>
-
-              <Card className="border-[#272727] bg-[#181818]">
-                <CardHeader className="p-5 pb-2">
-                  <CardDescription className="text-xs text-[#7c7c7c] uppercase tracking-wider">
-                    Completed Lessons
-                  </CardDescription>
-                  <CardTitle className="text-3xl font-extrabold text-[#F3E700]">
-                    18
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-5 pt-0 text-xs text-[#b3b3b3]">
-                  +4 completed this week
-                </CardContent>
-              </Card>
-
-              <Card className="border-[#272727] bg-[#181818]">
-                <CardHeader className="p-5 pb-2">
-                  <CardDescription className="text-xs text-[#7c7c7c] uppercase tracking-wider">
-                    Certifications
-                  </CardDescription>
-                  <CardTitle className="text-3xl font-extrabold text-emerald-400">
-                    1
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-5 pt-0 text-xs text-[#b3b3b3]">
-                  Full-Stack TypeScript Certified
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* In Progress Courses */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold tracking-tight text-white">
-                Current Learning Tracks
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="border-[#272727] bg-[#181818] hover:border-[#4d4d4d] transition-all">
-                  <CardHeader className="p-5 pb-3">
-                    <div className="flex justify-between items-start">
-                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider border-[#3a3a3a]">
-                        Intermediate
-                      </Badge>
-                      <span className="text-xs font-semibold text-[#F3E700]">65% Done</span>
-                    </div>
-                    <CardTitle className="text-lg font-bold text-white pt-2">
-                      Full-Stack Architecture with NestJS & React
-                    </CardTitle>
-                    <CardDescription className="text-xs text-[#b3b3b3]">
-                      Module 4: Keycloak Single Sign-On and RBAC Infrastructure
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-5 pt-0 space-y-3">
-                    <div className="h-1.5 w-full bg-[#1f1f1f] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#F3E700] rounded-full w-[65%]" />
-                    </div>
-                    <div className="flex justify-between items-center pt-2">
-                      <span className="text-xs text-[#7c7c7c]">12 of 18 lessons</span>
-                      <Button size="sm">Resume Lesson</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-[#272727] bg-[#181818] hover:border-[#4d4d4d] transition-all">
-                  <CardHeader className="p-5 pb-3">
-                    <div className="flex justify-between items-start">
-                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider border-[#3a3a3a]">
-                        Advanced
-                      </Badge>
-                      <span className="text-xs font-semibold text-[#539df5]">30% Done</span>
-                    </div>
-                    <CardTitle className="text-lg font-bold text-white pt-2">
-                      PostgreSQL Data Modeling & Prisma ORM
-                    </CardTitle>
-                    <CardDescription className="text-xs text-[#b3b3b3]">
-                      Module 2: High Performance Indexing and Relational Schemas
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-5 pt-0 space-y-3">
-                    <div className="h-1.5 w-full bg-[#1f1f1f] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#539df5] rounded-full w-[30%]" />
-                    </div>
-                    <div className="flex justify-between items-center pt-2">
-                      <span className="text-xs text-[#7c7c7c]">4 of 14 lessons</span>
-                      <Button variant="secondary" size="sm">Resume Lesson</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
+        {/* TAB: CATALOG */}
+        {activeTab === 'catalog' && (
+          <CatalogView
+            onSelectCourse={(courseSlugOrId) => {
+              setSelectedCourse(courseSlugOrId);
+              setActiveTab('detail');
+            }}
+          />
         )}
 
-        {/* TAB 2: Become an Instructor */}
+        {/* TAB: COURSE DETAIL */}
+        {activeTab === 'detail' && selectedCourse && (
+          <CourseDetailView
+            courseIdOrSlug={selectedCourse}
+            authenticated={authenticated}
+            onLogin={login}
+            onBack={() => setActiveTab('catalog')}
+            onStartLearning={(enId) => {
+              setActiveEnrollmentId(enId);
+              setActiveTab('player');
+            }}
+          />
+        )}
+
+        {/* TAB: MY LEARNING */}
+        {activeTab === 'learning' && (
+          <MyLearningView
+            onStartLearning={(enId) => {
+              setActiveEnrollmentId(enId);
+              setActiveTab('player');
+            }}
+            onExploreCatalog={() => setActiveTab('catalog')}
+            userName={displayName}
+          />
+        )}
+
+        {/* TAB: VERIFY CERTIFICATE */}
+        {activeTab === 'verify' && (
+          <VerifyCertificateView
+            initialCode={verifyCode}
+            onBack={() => setActiveTab('catalog')}
+          />
+        )}
+
+        {/* TAB: INSTRUCTOR ONBOARDING */}
         {activeTab === 'instructor' && (
-          <div className="max-w-3xl mx-auto space-y-6">
+          <div className="space-y-6">
             {loadingApp ? (
-              <div className="py-16 text-center text-xs text-[#7c7c7c]">
-                <div className="flex items-center justify-center gap-2">
-                  <span className="h-4 w-4 rounded-full border-2 border-[#F3E700] border-t-transparent animate-spin" />
-                  Loading instructor status...
-                </div>
-              </div>
+              <Card className="border-[#272727] bg-[#181818] p-8 text-center text-xs text-zinc-400">
+                Checking instructor application status...
+              </Card>
             ) : isAuthor ? (
-              <Card className="border-[#F3E700]/30 bg-[#181818] shadow-2xl p-8 text-center space-y-4">
-                <div className="mx-auto h-16 w-16 rounded-2xl bg-[#F3E700] text-black font-extrabold text-2xl flex items-center justify-center shadow-lg">
-                  ★
+              <Card className="border-[#272727] bg-[#181818] p-8 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Badge variant="success" className="text-xs font-bold">
+                    ✓ Verified Author
+                  </Badge>
+                  <span className="text-xs text-[#b3b3b3]">
+                    Your account has full course publishing capabilities.
+                  </span>
                 </div>
-                <Badge variant="default" className="text-xs">
-                  Active Author Privileges
-                </Badge>
-                <h2 className="text-2xl font-extrabold text-white">
-                  You Are an Approved Instructor!
-                </h2>
-                <p className="text-sm text-[#b3b3b3] max-w-md mx-auto leading-relaxed">
-                  Your account has authoring and curriculum building privileges. Access the Creator Studio to build courses, upload videos, and mentor learners.
+                <h2 className="text-xl font-bold text-white">Welcome back to the Creator Studio</h2>
+                <p className="text-xs text-[#b3b3b3] max-w-xl">
+                  Manage your curricula, upload videos, configure questionnaires, and submit courses for manager approval in the Admin Console.
                 </p>
                 <div className="pt-2">
                   <a
@@ -463,9 +408,7 @@ export const App: React.FC = () => {
                     rel="noreferrer"
                     className="inline-flex"
                   >
-                    <Button size="lg">
-                      Open Author Studio ↗
-                    </Button>
+                    <Button size="lg">Open Author Studio ↗</Button>
                   </a>
                 </div>
               </Card>
@@ -630,8 +573,8 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 3: Profile & Account Settings */}
-        {activeTab === 'profile' && (
+        {/* TAB: PROFILE & SETTINGS */}
+        {activeTab === 'profile' && authenticated && (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Identity Card */}
             <Card className="md:col-span-5 border-[#272727] bg-[#181818]">

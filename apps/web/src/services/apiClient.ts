@@ -118,3 +118,4 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient(ENV.API_URL);
+export const contentClient = new ApiClient(ENV.API_URL.replace(/\/api\/?$/, ''));

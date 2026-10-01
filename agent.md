@@ -1082,5 +1082,60 @@ A feature is complete when:
 - Audit/event tracking is added where applicable
 - Documentation is updated
 - Environment variables are documented
-- No secrets are committed
+---
 
+# 32. Shared Package Conventions (`packages/ui`)
+
+The monorepo ships a shared UI package at `packages/ui` (`@virtua-lms/ui`). Both `apps/admin` and `apps/web` already depend on it.
+
+**Always use this package for shared UI primitives. Do NOT create local copies.**
+
+## What is in `@virtua-lms/ui`
+
+| Export | Purpose |
+|--------|---------|
+| `Toaster` | Bottom-right toast container (sonner-backed) |
+| `toast` | Imperative toast API re-exported from `sonner` |
+| `Button`, `Card`, `Badge`, `Input` | shadcn/ui primitives |
+| `cn` | `clsx` + `tailwind-merge` utility |
+
+## Toaster / Notifications
+
+**Always use sonner (`toast` from `sonner` or `@virtua-lms/ui`) — never roll a custom toast or alert system.**
+
+```tsx
+// ✅ Correct — import from sonner (available via the shared package or directly)
+import { toast } from 'sonner';
+
+toast.success('Course published.', { description: 'Live in the catalog.' });
+toast.error('Something went wrong.');
+toast.warning('Changes requested.');
+toast.info('Course archived.');
+```
+
+The `<Toaster />` component must be rendered once at the root of each app:
+
+```tsx
+// apps/admin/src/console/ConsoleApp.tsx
+import { Toaster } from '@virtua-lms/ui';
+
+// Place at root, outside of any scroll container
+return <><AppLayout />...<Toaster /></>;
+```
+
+## Adding new shared components
+
+Run shadcn/ui CLI **from the `packages/ui` directory**:
+
+```bash
+cd packages/ui
+npx shadcn@latest add <component-name>
+```
+
+Then export from `packages/ui/src/index.ts` so consuming apps can import from `@virtua-lms/ui`.
+
+## Do NOT
+
+- Create local `Toast.tsx`, `Toaster.tsx`, or similar in individual apps.
+- Import `sonner` directly without checking if `@virtua-lms/ui` re-exports what you need.
+- Use `alert()`, browser dialogs, or inline `<div className="notice">` for user feedback — use `toast`.

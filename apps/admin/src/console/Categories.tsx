@@ -4,6 +4,7 @@ import { contentClient as api } from '../services/apiClient';
 import { Empty, ErrorNotice, Field, Modal, Pager } from './ui';
 import type { CategoryItem, CategoryPage } from './types';
 import { useLoad } from './useLoad';
+import { toast } from 'sonner';
 
 export function CategoryFormModal({
   category,
@@ -86,7 +87,6 @@ export function CategoriesPage() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<CategoryItem | null>(null);
   const [deleting, setDeleting] = useState<CategoryItem | null>(null);
-  const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -104,7 +104,7 @@ export function CategoriesPage() {
     try {
       await api.delete(`/categories/${category.id}`);
       setDeleting(null);
-      setNotice(`Category "${category.name}" was deleted.`);
+      toast.info('Category deleted.', { description: `"${category.name}" was removed.` });
       result.reload();
     } catch (err) {
       setDeleteError(
@@ -133,18 +133,7 @@ export function CategoriesPage() {
         </div>
       </div>
 
-      {notice && (
-        <div className="notice" role="status">
-          {notice}
-          <button
-            className="text-button"
-            style={{ marginLeft: 12 }}
-            onClick={() => setNotice('')}
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
+
 
       <section className="panel">
         <form
@@ -272,7 +261,7 @@ export function CategoriesPage() {
           onClose={() => setCreating(false)}
           onSaved={(newCat) => {
             setCreating(false);
-            setNotice(`Category "${newCat.name}" created successfully.`);
+            toast.success('Category created.', { description: `"${newCat.name}" was created successfully.` });
             result.reload();
           }}
         />
@@ -284,7 +273,7 @@ export function CategoriesPage() {
           onClose={() => setEditing(null)}
           onSaved={(updated) => {
             setEditing(null);
-            setNotice(`Category "${updated.name}" updated successfully.`);
+            toast.success('Category updated.', { description: `"${updated.name}" was updated successfully.` });
             result.reload();
           }}
         />
