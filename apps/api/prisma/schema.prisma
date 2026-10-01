@@ -43,6 +43,7 @@ model User {
   enrollments        Enrollment[]       @relation("UserEnrollments")
   revokedEnrollments Enrollment[]       @relation("RevokedEnrollments")
   certificates       Certificate[]      @relation("UserCertificates")
+  orders             Order[]            @relation("UserOrders")
 
   @@index([email])
   @@index([isActive])
@@ -174,6 +175,9 @@ model Product {
   submissions      CourseSubmission[]
   enrollments      Enrollment[]
   certificates     Certificate[]      @relation("ProductCertificates")
+  orderItems       OrderItem[]
+  price            Decimal            @default(0.0) @db.Decimal(10, 2)
+  isFree           Boolean            @default(true)
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
@@ -497,4 +501,73 @@ model Certificate {
   @@index([userId])
   @@index([productId])
   @@index([code])
+}
+
+// ─── Phase 5: Orders, Payments & VirtuaPayments ─────────────────────────────
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  orderNumber String      @unique
+  userId      String
+  user        User        @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
+  status      OrderStatus @default(PENDING)
+  totalAmount Decimal     @default(0.0) @db.Decimal(10, 2)
+  currency    String      @default("USD")
+  items       OrderItem[]
+  payment     Payment?
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([orderNumber])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  price     Decimal  @default(0.0) @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  orderId           String        @unique
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider          String        @default("VIRTUAPAYMENTS")
+  providerPaymentId String?
+  status            PaymentStatus @default(PENDING)
+  amount            Decimal       @db.Decimal(10, 2)
+  currency          String        @default("USD")
+  idempotencyKey    String?
+  rawPayload        Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([status])
+  @@index([providerPaymentId])
+  @@index([createdAt])
 }

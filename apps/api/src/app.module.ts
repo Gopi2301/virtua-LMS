@@ -19,6 +19,9 @@ import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { ProgressModule } from './progress/progress.module';
 import { CertificatesModule } from './certificates/certificates.module';
 
+import { OrdersModule } from './orders/orders.module';
+import { PaymentsModule } from './payments/payments.module';
+
 @Module({
     imports: [
       PrismaModule,
@@ -40,6 +43,9 @@ import { CertificatesModule } from './certificates/certificates.module';
       EnrollmentsModule,
       ProgressModule,
       CertificatesModule,
+      // ─── Phase 5 ───────────────────────────────────────
+      OrdersModule,
+      PaymentsModule,
     ],
     controllers: [AppController],
     providers: [],
