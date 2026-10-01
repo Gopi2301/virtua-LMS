@@ -37,3 +37,12 @@ Thumbs.db
 uploads/
 apps/api/uploads/**
 !apps/api/uploads/**/.gitkeep
+# Local review artifacts generated during UI QA
+/.fix-ui.cjs
+/.learner-polish.cjs
+/.learner-refactor.cjs
+/.ui-accessibility.cjs
+/.ui-final-polish.cjs
+/.ui-refactor.cjs
+/.verify-ui.cjs
+/apps/admin/public/ui-review/

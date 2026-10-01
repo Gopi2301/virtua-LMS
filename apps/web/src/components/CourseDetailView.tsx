@@ -1,9 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { coursesService } from '../services/courses.service';
-import type { CourseDetail, SessionPreviewData } from '../services/courses.service';
-import { enrollmentsService } from '../services/enrollments.service';
-import type { EnrollmentRecord } from '../services/enrollments.service';
-import { formatDuration, levelColor } from '../utils/formatters';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  FileText,
+  Play,
+  X,
+} from "@virtua-lms/ui";
+import { LearningDialog } from "./LearningUI";
+import React, { useState, useEffect } from "react";
+import { coursesService } from "../services/courses.service";
+import type {
+  CourseDetail,
+  SessionPreviewData,
+} from "../services/courses.service";
+import { enrollmentsService } from "../services/enrollments.service";
+import type { EnrollmentRecord } from "../services/enrollments.service";
+import { formatDuration } from "../utils/formatters";
 
 interface CourseDetailViewProps {
   courseIdOrSlug: string;
@@ -25,7 +37,9 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [enrolling, setEnrolling] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [previewModal, setPreviewModal] = useState<SessionPreviewData | null>(null);
+  const [previewModal, setPreviewModal] = useState<SessionPreviewData | null>(
+    null,
+  );
   const [loadingPreview, setLoadingPreview] = useState<boolean>(false);
 
   useEffect(() => {
@@ -43,7 +57,8 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
           try {
             const myEnrollments = await enrollmentsService.getMyEnrollments();
             const existing = myEnrollments.enrollments.find(
-              (e) => e.productId === detail.id || e.product?.slug === detail.slug
+              (e) =>
+                e.productId === detail.id || e.product?.slug === detail.slug,
             );
             if (existing && isMounted) {
               setEnrollment(existing);
@@ -53,7 +68,8 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
           }
         }
       } catch (err: any) {
-        if (isMounted) setError(err?.message || 'Failed to load course details');
+        if (isMounted)
+          setError(err?.message || "Failed to load course details");
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -79,7 +95,7 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
       setEnrollment(record);
       onStartLearning(record.id);
     } catch (err: any) {
-      setError(err?.message || 'Enrollment failed. Please try again.');
+      setError(err?.message || "Enrollment failed. Please try again.");
     } finally {
       setEnrolling(false);
     }
@@ -88,10 +104,13 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
   const handleOpenPreview = async (sessionId: string) => {
     setLoadingPreview(true);
     try {
-      const prevData = await coursesService.getCoursePreview(courseIdOrSlug, sessionId);
+      const prevData = await coursesService.getCoursePreview(
+        courseIdOrSlug,
+        sessionId,
+      );
       setPreviewModal(prevData);
     } catch (err: any) {
-      alert(err?.message || 'Failed to load preview');
+      alert(err?.message || "Failed to load preview");
     } finally {
       setLoadingPreview(false);
     }
@@ -101,10 +120,10 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
     return (
       <div className="space-y-6 animate-pulse">
         <div className="h-6 w-32 bg-zinc-800 rounded" />
-        <div className="h-64 bg-zinc-800 rounded-3xl" />
+        <div className="h-64 bg-zinc-800 rounded-md" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 h-96 bg-zinc-800 rounded-2xl" />
-          <div className="h-64 bg-zinc-800 rounded-2xl" />
+          <div className="lg:col-span-2 h-96 bg-zinc-800 rounded-md" />
+          <div className="h-64 bg-zinc-800 rounded-md" />
         </div>
       </div>
     );
@@ -112,11 +131,11 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
 
   if (error || !course) {
     return (
-      <div className="p-12 text-center rounded-3xl border border-rose-500/20 bg-rose-500/5 text-rose-300 space-y-4">
-        <p className="text-base font-semibold">{error || 'Course not found'}</p>
+      <div className="p-12 text-center rounded-md border border-rose-500/20 bg-rose-500/5 text-rose-300 space-y-4">
+        <p className="text-base font-semibold">{error || "Course not found"}</p>
         <button
           onClick={onBack}
-          className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold rounded-lg text-white"
+          className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-sm font-semibold rounded-md text-white"
         >
           ← Return to Catalog
         </button>
@@ -125,82 +144,94 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
   }
 
   const allSessions = course.course.sections.flatMap((s) => s.sessions);
-  const totalDuration = allSessions.reduce((acc, s) => acc + (s.video?.duration || 0), 0);
-  const levelStyle = levelColor(course.course.level);
+  const totalDuration = allSessions.reduce(
+    (acc, s) => acc + (s.video?.duration || 0),
+    0,
+  );
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="course-detail space-y-8 ">
       {/* Breadcrumb */}
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-white transition group"
+        className="flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-white transition group"
       >
-        <span className="group-hover:-translate-x-1 transition-transform">←</span>
+        <ArrowLeft size={16} aria-hidden="true" />
         <span>Back to Course Catalog</span>
       </button>
 
       {/* Hero Header */}
-      <div className="relative rounded-3xl border border-[#272727] bg-[#181818] p-6 sm:p-10 overflow-hidden shadow-2xl">
+      <div className="course-detail-heading">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2 space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               {course.course.category && (
-                <span className="px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 text-[10px] font-bold uppercase tracking-wider border border-zinc-700">
+                <span className="px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 text-sm font-bold   border border-zinc-700">
                   {course.course.category.name}
                 </span>
               )}
-              <span
-                className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${levelStyle.bg} ${levelStyle.text} ${levelStyle.border}`}
-              >
-                {course.course.level}
-              </span>
-              <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-extrabold uppercase tracking-wider">
-                Full Free Access
+              <span className="text-sm text-[var(--color-text-secondary)]">
+                {course.course.level.replaceAll("_", " ").toLowerCase()}
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-snug">
+            <h1 className="text-2xl sm:text-2xl font-semibold text-white tracking-tight leading-snug">
               {course.title}
             </h1>
 
             <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
-              {course.description || course.shortDescription || 'No description provided.'}
+              {course.description ||
+                course.shortDescription ||
+                "No description provided."}
             </p>
 
             {/* Quick Metrics */}
-            <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-[#272727] text-xs text-zinc-400">
+            <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-[var(--color-surface-elevated-alt)] text-sm text-zinc-400">
               <div>
-                <span className="text-zinc-500">Curriculum:</span>{' '}
+                <span className="text-[var(--color-text-secondary)]">
+                  Curriculum:
+                </span>{" "}
                 <strong className="text-white font-semibold">
-                  {course.course.sections.length} Sections · {allSessions.length} Lessons
+                  {course.course.sections.length} Sections ·{" "}
+                  {allSessions.length} Lessons
                 </strong>
               </div>
               <div>
-                <span className="text-zinc-500">Video Duration:</span>{' '}
-                <strong className="text-white font-semibold">{formatDuration(totalDuration)}</strong>
+                <span className="text-[var(--color-text-secondary)]">
+                  Video Duration:
+                </span>{" "}
+                <strong className="text-white font-semibold">
+                  {formatDuration(totalDuration)}
+                </strong>
               </div>
               <div>
-                <span className="text-zinc-500">Language:</span>{' '}
-                <strong className="text-white font-semibold uppercase">{course.course.language || 'EN'}</strong>
+                <span className="text-[var(--color-text-secondary)]">
+                  Language:
+                </span>{" "}
+                <strong className="text-white font-semibold ">
+                  {course.course.language || "EN"}
+                </strong>
               </div>
             </div>
           </div>
 
           {/* Enrollment Card */}
-          <div className="rounded-2xl border border-[#333] bg-[#141414] p-6 space-y-5 shadow-xl">
+          <div className="rounded-md border border-[#333] bg-[#141414] p-6 space-y-5 ">
             {course.thumbnail && (
               <img
                 src={course.thumbnail}
                 alt={course.title}
-                className="w-full aspect-video object-cover rounded-xl border border-zinc-800"
+                className="w-full aspect-video object-cover rounded-md border border-zinc-800"
               />
             )}
 
             <div className="space-y-1">
-              <span className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Price</span>
+              <span className="text-sm text-zinc-400   font-semibold">
+                Access
+              </span>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-white">Free</span>
-                <span className="text-xs text-[#F3E700] font-semibold bg-[#F3E700]/10 px-2 py-0.5 rounded border border-[#F3E700]/30">
+                <span className="text-2xl font-semibold text-white">Free</span>
+                <span className="text-sm text-[var(--color-primary)] font-semibold bg-[var(--color-primary)]/10 px-2 py-0.5 rounded border border-[var(--color-primary)]/30">
                   Includes Certificate
                 </span>
               </div>
@@ -208,43 +239,46 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
 
             {enrollment ? (
               <div className="space-y-3">
-                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs text-center font-semibold">
-                  ✓ You are enrolled in this course
+                <div className="p-3 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm text-center font-semibold">
+                  You are enrolled in this course
                 </div>
                 <button
                   onClick={() => onStartLearning(enrollment.id)}
-                  className="w-full py-3.5 rounded-xl bg-[#F3E700] hover:bg-[#e0d500] text-black font-extrabold text-sm transition shadow-[0_0_16px_rgba(243,231,0,0.3)] flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-md bg-[var(--color-primary)] hover:bg-[#e0d500] text-black font-semibold text-sm transition  flex items-center justify-center gap-2"
                 >
                   <span>Continue Learning</span>
-                  <span>→</span>
+                  <ArrowRight size={16} aria-hidden="true" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={handleEnroll}
                 disabled={enrolling}
-                className="w-full py-3.5 rounded-xl bg-[#F3E700] hover:bg-[#e0d500] text-black font-extrabold text-sm transition shadow-[0_0_16px_rgba(243,231,0,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-md bg-[var(--color-primary)] hover:bg-[#e0d500] text-black font-semibold text-sm transition  disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {enrolling ? (
-                  'Enrolling...'
+                  "Enrolling..."
                 ) : (
                   <>
                     <span>Enroll Now for Free</span>
-                    <span>→</span>
+                    <ArrowRight size={16} aria-hidden="true" />
                   </>
                 )}
               </button>
             )}
 
-            <ul className="text-xs text-zinc-400 space-y-2 pt-2 border-t border-zinc-800">
+            <ul className="text-sm text-zinc-400 space-y-2 pt-2 border-t border-zinc-800">
               <li className="flex items-center gap-2">
-                <span className="text-emerald-400">✓</span> Full lifetime access
+                <Check size={16} aria-hidden="true" /> Access to all course
+                lessons
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-emerald-400">✓</span> Access on mobile & desktop
+                <Check size={16} aria-hidden="true" /> Access on mobile &
+                desktop
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-emerald-400">✓</span> Verifiable Certificate of Completion
+                <Check size={16} aria-hidden="true" /> Verifiable Certificate of
+                Completion
               </li>
             </ul>
           </div>
@@ -256,8 +290,10 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
         {/* Curriculum Sections */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white tracking-tight">Course Curriculum</h2>
-            <span className="text-xs text-zinc-400">
+            <h2 className="text-xl font-bold text-white tracking-tight">
+              Course Curriculum
+            </h2>
+            <span className="text-sm text-zinc-400">
               {allSessions.length} Lessons ({formatDuration(totalDuration)})
             </span>
           </div>
@@ -266,41 +302,50 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
             {course.course.sections.map((section, secIdx) => (
               <div
                 key={section.id}
-                className="rounded-2xl border border-[#272727] bg-[#181818] overflow-hidden"
+                className="rounded-md border border-[var(--color-surface-elevated-alt)] bg-[var(--color-surface)] overflow-hidden"
               >
-                <div className="p-4 sm:p-5 bg-zinc-900/60 border-b border-[#272727] flex items-center justify-between">
+                <div className="p-4 sm:p-5 bg-zinc-900/60 border-b border-[var(--color-surface-elevated-alt)] flex items-center justify-between">
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-[#F3E700] uppercase tracking-wider">
+                    <span className="text-sm font-bold text-[var(--color-primary)]  ">
                       Section {secIdx + 1}
                     </span>
-                    <h3 className="text-base font-bold text-white">{section.title}</h3>
+                    <h3 className="text-base font-bold text-white">
+                      {section.title}
+                    </h3>
                     {section.description && (
-                      <p className="text-xs text-zinc-400">{section.description}</p>
+                      <p className="text-sm text-zinc-400">
+                        {section.description}
+                      </p>
                     )}
                   </div>
-                  <span className="text-xs text-zinc-500 font-medium">
-                    {section.sessions.length} {section.sessions.length === 1 ? 'lesson' : 'lessons'}
+                  <span className="text-sm text-[var(--color-text-secondary)] font-medium">
+                    {section.sessions.length}{" "}
+                    {section.sessions.length === 1 ? "lesson" : "lessons"}
                   </span>
                 </div>
 
-                <div className="divide-y divide-[#272727]">
+                <div className="divide-y divide-[var(--color-surface-elevated-alt)]">
                   {section.sessions.map((session, sessIdx) => (
                     <div
                       key={session.id}
-                      className="p-4 sm:px-5 flex items-center justify-between hover:bg-zinc-800/30 transition text-xs"
+                      className="p-4 sm:px-5 flex items-center justify-between hover:bg-zinc-800/30 transition text-sm"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center font-mono text-[10px]">
+                        <div className="w-6 h-6 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center font-mono text-sm">
                           {sessIdx + 1}
                         </div>
                         <div>
-                          <p className="font-semibold text-zinc-200">{session.title}</p>
-                          <div className="flex items-center gap-2 text-[11px] text-zinc-500 mt-0.5">
+                          <p className="font-semibold text-zinc-200">
+                            {session.title}
+                          </p>
+                          <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] mt-0.5">
                             <span>{session.status}</span>
                             {session.video?.duration ? (
                               <>
                                 <span>·</span>
-                                <span>{formatDuration(session.video.duration)}</span>
+                                <span>
+                                  {formatDuration(session.video.duration)}
+                                </span>
                               </>
                             ) : null}
                           </div>
@@ -312,9 +357,14 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
                           <button
                             onClick={() => handleOpenPreview(session.id)}
                             disabled={loadingPreview}
-                            className="px-3 py-1 rounded-full bg-[#F3E700]/10 hover:bg-[#F3E700]/20 text-[#F3E700] border border-[#F3E700]/30 font-bold text-[11px] transition"
+                            className="px-3 py-1 rounded-full bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] border border-[var(--color-primary)]/30 font-bold text-sm transition"
                           >
-                            Preview Free 👁
+                            <Play
+                              size={16}
+                              className="inline mr-1"
+                              aria-hidden="true"
+                            />
+                            Preview
                           </button>
                         )}
                       </div>
@@ -328,23 +378,27 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
 
         {/* Instructor Card */}
         <div className="space-y-6">
-          <h2 className="text-xl font-bold text-white tracking-tight">Your Instructor</h2>
-          <div className="rounded-2xl border border-[#272727] bg-[#181818] p-6 space-y-4">
+          <h2 className="text-xl font-bold text-white tracking-tight">
+            Your Instructor
+          </h2>
+          <div className="pt-2 space-y-4">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#F3E700] text-black font-extrabold text-xl flex items-center justify-center shadow-[0_0_16px_rgba(243,231,0,0.2)]">
-                {course.course.author?.firstName?.charAt(0) || 'I'}
+              <div className="w-14 h-14 rounded-md bg-[var(--color-primary)] text-black font-semibold text-xl flex items-center justify-center ">
+                {course.course.author?.firstName?.charAt(0) || "I"}
               </div>
               <div>
                 <h3 className="text-base font-bold text-white">
-                  {course.course.author?.firstName} {course.course.author?.lastName || ''}
+                  {course.course.author?.firstName}{" "}
+                  {course.course.author?.lastName || ""}
                 </h3>
-                <p className="text-xs text-[#F3E700] font-medium">Lead Course Author</p>
+                <p className="text-sm text-[var(--color-primary)] font-medium">
+                  Instructor
+                </p>
               </div>
             </div>
 
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              {course.course.author?.bio ||
-                'Passionate educator and engineer sharing production best practices and hands-on skills.'}
+            <p className="text-sm text-zinc-400 leading-relaxed">
+              {course.course.author?.bio || "No instructor biography provided."}
             </p>
           </div>
         </div>
@@ -352,26 +406,32 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
 
       {/* Free Preview Modal */}
       {previewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-3xl bg-[#141414] border border-[#333] rounded-2xl p-6 shadow-2xl space-y-4">
+        <LearningDialog
+          title={previewModal.title}
+          onClose={() => setPreviewModal(null)}
+        >
+          <div className="relative w-full max-w-3xl bg-[#141414] border border-[#333] rounded-md p-6  space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <div>
-                <span className="text-[10px] uppercase font-bold text-[#F3E700] tracking-wider">
+                <span className="text-sm  font-bold text-[var(--color-primary)] ">
                   FREE PREVIEW LESSON
                 </span>
-                <h3 className="text-lg font-bold text-white">{previewModal.title}</h3>
+                <h3 className="text-lg font-bold text-white">
+                  {previewModal.title}
+                </h3>
               </div>
               <button
                 onClick={() => setPreviewModal(null)}
+                aria-label="Close lesson preview"
                 className="text-zinc-400 hover:text-white p-2 rounded-full hover:bg-zinc-800"
               >
-                ✕
+                <X size={20} aria-hidden="true" />
               </button>
             </div>
 
             {/* Video Player */}
             {previewModal.video?.vimeoVideoId ? (
-              <div className="aspect-video w-full rounded-xl overflow-hidden bg-black border border-zinc-800">
+              <div className="aspect-video w-full rounded-md overflow-hidden bg-black border border-zinc-800">
                 <iframe
                   className="w-full h-full"
                   src={`https://player.vimeo.com/video/${previewModal.video.vimeoVideoId}?autoplay=1`}
@@ -381,7 +441,7 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
                 />
               </div>
             ) : (
-              <div className="p-8 text-center bg-zinc-900 rounded-xl text-zinc-400 text-sm">
+              <div className="p-8 text-center bg-zinc-900 rounded-md text-zinc-400 text-sm">
                 No video attached to this preview.
               </div>
             )}
@@ -389,26 +449,30 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
             {/* Resources list */}
             {previewModal.resources && previewModal.resources.length > 0 && (
               <div className="pt-2 border-t border-zinc-800">
-                <p className="text-xs font-semibold text-zinc-300 mb-2">Lesson Resources:</p>
+                <p className="text-sm font-semibold text-zinc-300 mb-2">
+                  Lesson Resources:
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {previewModal.resources.map((res) => (
                     <a
                       key={res.id}
-                      href={res.url || '#'}
+                      href={res.url || "#"}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-sm text-zinc-200 border border-zinc-700 flex items-center gap-1.5"
                     >
-                      <span>📎</span>
+                      <FileText size={16} aria-hidden="true" />
                       <span>{res.title}</span>
-                      <span className="text-[10px] text-zinc-500 uppercase">({res.type})</span>
+                      <span className="text-sm text-[var(--color-text-secondary)] ">
+                        ({res.type})
+                      </span>
                     </a>
                   ))}
                 </div>
               </div>
             )}
           </div>
-        </div>
+        </LearningDialog>
       )}
     </div>
   );

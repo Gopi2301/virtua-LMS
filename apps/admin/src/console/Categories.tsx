@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
-import { contentClient as api } from '../services/apiClient';
-import { Empty, ErrorNotice, Field, Modal, Pager } from './ui';
-import type { CategoryItem, CategoryPage } from './types';
-import { useLoad } from './useLoad';
-import { toast } from 'sonner';
+import { Search } from "@virtua-lms/ui";
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { contentClient as api } from "../services/apiClient";
+import { Empty, ErrorNotice, Field, Modal, Pager } from "./ui";
+import type { CategoryItem, CategoryPage } from "./types";
+import { useLoad } from "./useLoad";
+import { toast } from "sonner";
 
 export function CategoryFormModal({
   category,
@@ -21,7 +22,7 @@ export function CategoryFormModal({
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
-    const name = String(data.get('name') || '').trim();
+    const name = String(data.get("name") || "").trim();
 
     if (!name) return;
 
@@ -34,11 +35,11 @@ export function CategoryFormModal({
 
       const result = category
         ? await api.put<CategoryItem>(`/categories/${category.id}`, payload)
-        : await api.post<CategoryItem>('/categories', payload);
+        : await api.post<CategoryItem>("/categories", payload);
 
       onSaved(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to save category');
+      setError(err instanceof Error ? err.message : "Unable to save category");
     } finally {
       setBusy(false);
     }
@@ -46,7 +47,7 @@ export function CategoryFormModal({
 
   return (
     <Modal
-      title={category ? 'Edit category' : 'Create a new category'}
+      title={category ? "Edit category" : "Create a new category"}
       onClose={onClose}
       busy={busy}
     >
@@ -61,7 +62,7 @@ export function CategoryFormModal({
               autoFocus
               required
               maxLength={100}
-              defaultValue={category?.name || ''}
+              defaultValue={category?.name || ""}
               placeholder="e.g. Design & Creativity, Web Development, Business"
             />
           </Field>
@@ -71,7 +72,7 @@ export function CategoryFormModal({
               Cancel
             </button>
             <button className="btn" disabled={busy}>
-              {busy ? 'Saving…' : category ? 'Save changes' : 'Create category'}
+              {busy ? "Saving…" : category ? "Save changes" : "Create category"}
             </button>
           </div>
         </fieldset>
@@ -82,8 +83,8 @@ export function CategoryFormModal({
 
 export function CategoriesPage() {
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
+  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<CategoryItem | null>(null);
   const [deleting, setDeleting] = useState<CategoryItem | null>(null);
@@ -92,10 +93,10 @@ export function CategoriesPage() {
 
   const result = useLoad(
     () =>
-      api.get<CategoryPage>('/categories/query', {
+      api.get<CategoryPage>("/categories/query", {
         params: { page, limit: 10, search: query || undefined },
       }),
-    [page, query]
+    [page, query],
   );
 
   async function handleDelete(category: CategoryItem) {
@@ -104,11 +105,13 @@ export function CategoriesPage() {
     try {
       await api.delete(`/categories/${category.id}`);
       setDeleting(null);
-      toast.info('Category deleted.', { description: `"${category.name}" was removed.` });
+      toast.info("Category deleted.", {
+        description: `"${category.name}" was removed.`,
+      });
       result.reload();
     } catch (err) {
       setDeleteError(
-        err instanceof Error ? err.message : 'Unable to delete category'
+        err instanceof Error ? err.message : "Unable to delete category",
       );
     } finally {
       setBusy(false);
@@ -133,8 +136,6 @@ export function CategoriesPage() {
         </div>
       </div>
 
-
-
       <section className="panel">
         <form
           className="toolbar"
@@ -145,7 +146,7 @@ export function CategoriesPage() {
           }}
         >
           <label className="search-field">
-            <span aria-hidden="true">⌕</span>
+            <Search size={18} aria-hidden="true" />
             <input
               aria-label="Search categories"
               placeholder="Search category name…"
@@ -159,8 +160,8 @@ export function CategoriesPage() {
               type="button"
               className="text-button"
               onClick={() => {
-                setSearch('');
-                setQuery('');
+                setSearch("");
+                setQuery("");
                 setPage(1);
               }}
             >
@@ -181,29 +182,31 @@ export function CategoriesPage() {
               <table>
                 <thead>
                   <tr>
-                    <th>Category Name</th>
-                    <th>Slug</th>
-                    <th>Courses</th>
-                    <th>Created</th>
-                    <th>Actions</th>
+                    <th scope="col">Category Name</th>
+                    <th scope="col">Slug</th>
+                    <th scope="col">Courses</th>
+                    <th scope="col">Created</th>
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {result.data.categories.map((c) => (
                     <tr key={c.id}>
-                      <td>
+                      <td data-label="Category">
                         <strong>{c.name}</strong>
                       </td>
-                      <td>
+                      <td data-label="Slug">
                         <span className="tag">{c.slug}</span>
                       </td>
-                      <td>
+                      <td data-label="Courses">
                         <strong>{c._count?.courses ?? 0}</strong>
                       </td>
-                      <td>
-                        <small>{new Date(c.createdAt).toLocaleDateString()}</small>
+                      <td data-label="Created">
+                        <small>
+                          {new Date(c.createdAt).toLocaleDateString()}
+                        </small>
                       </td>
-                      <td>
+                      <td data-label="Actions">
                         <div className="actions">
                           <button
                             className="text-button"
@@ -230,7 +233,11 @@ export function CategoriesPage() {
 
             {!result.data.categories.length && (
               <Empty
-                title={query ? 'No categories match your search' : 'No categories yet'}
+                title={
+                  query
+                    ? "No categories match your search"
+                    : "No categories yet"
+                }
                 action={
                   <button
                     className="btn secondary"
@@ -241,8 +248,8 @@ export function CategoriesPage() {
                 }
               >
                 {query
-                  ? 'Try searching with a different term.'
-                  : 'Get started by creating categories to organize your course library.'}
+                  ? "Try searching with a different term."
+                  : "Get started by creating categories to organize your course library."}
               </Empty>
             )}
 
@@ -261,7 +268,9 @@ export function CategoriesPage() {
           onClose={() => setCreating(false)}
           onSaved={(newCat) => {
             setCreating(false);
-            toast.success('Category created.', { description: `"${newCat.name}" was created successfully.` });
+            toast.success("Category created.", {
+              description: `"${newCat.name}" was created successfully.`,
+            });
             result.reload();
           }}
         />
@@ -273,7 +282,9 @@ export function CategoriesPage() {
           onClose={() => setEditing(null)}
           onSaved={(updated) => {
             setEditing(null);
-            toast.success('Category updated.', { description: `"${updated.name}" was updated successfully.` });
+            toast.success("Category updated.", {
+              description: `"${updated.name}" was updated successfully.`,
+            });
             result.reload();
           }}
         />
@@ -286,12 +297,13 @@ export function CategoriesPage() {
           busy={busy}
         >
           <p>
-            Are you sure you want to delete the category <strong>{deleting.name}</strong>?
+            Are you sure you want to delete the category{" "}
+            <strong>{deleting.name}</strong>?
           </p>
           <p className="muted" style={{ marginTop: 8 }}>
             {deleting._count?.courses
               ? `Warning: There are currently ${deleting._count.courses} course(s) linked to this category.`
-              : 'This action cannot be undone.'}
+              : "This action cannot be undone."}
           </p>
           <ErrorNotice error={deleteError} />
           <div className="dialog-actions">
@@ -309,7 +321,7 @@ export function CategoriesPage() {
               disabled={busy}
               onClick={() => handleDelete(deleting)}
             >
-              {busy ? 'Deleting…' : 'Delete category'}
+              {busy ? "Deleting…" : "Delete category"}
             </button>
           </div>
         </Modal>
